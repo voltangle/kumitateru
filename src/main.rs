@@ -1,19 +1,21 @@
 mod prepare_build;
 
 use switch_statement;
+use prepare_build::construct_connectiq_project;
 
 const BUILD_COMMAND: &str = "build";
 
 fn main() {
-    println!("GarBuild");
-
     let command = std::env::args().nth(1).expect("command");
 
     // Check what command was in here
-    switch_statement::switch! { command;
+    match command {
         BUILD_COMMAND => {
             println!("Building project...");
+            println!("Step 1: Assemble a Connect IQ Project");
+            construct_connectiq_project();
         },
         _ => println!("No command found."),
     }
 }
+
