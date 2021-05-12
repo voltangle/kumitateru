@@ -3,7 +3,8 @@ use minidom::Element;
 use colored::Colorize;
 use std::path::PathBuf;
 use std::io::Error;
-use std::fs::ReadDir;
+use std::fs::{ReadDir, DirEntry};
+use std::ffi::OsString;
 
 /// This function gathers all files from resources and
 /// src directories, and transfers them in build/proj,
@@ -51,8 +52,7 @@ pub fn construct_connectiq_project() {
     println!("{}", "Reading manifest...".bold());
     let languages = get_languages_from_manifest(fs::read_to_string(manifest_location).expect("No manifest.xml was found"));
 
-    println!("{}", "Checking available string resources...".bold());
-    let string_resource_directories;
+    let string_resource_directories: ReadDir;
     match fs::read_dir(resources_strings_location) {
         Ok(dir) => {
             string_resource_directories = dir;
@@ -62,6 +62,39 @@ pub fn construct_connectiq_project() {
             std::process::exit(1);
         }
     }
+
+    let mut available_resources: Vec<String> = Vec::new();
+
+    for entry in string_resource_directories {
+        match entry {
+            Ok(entry) => {
+                match entry.file_name().into_string() {
+                    Ok(entry) => {
+                        available_resources.push(entry);
+                    }
+                    Err(_) => {
+                        eprintln!("{}", "Something had gone wrong while reading files. Exiting...".bright_red());
+                        std::process::exit(1);
+                    }
+                }
+            }
+            Err(_) => {
+                eprintln!("{}", "Something had gone wrong while reading files. Exiting...".bright_red());
+                std::process::exit(1);
+            }
+        }
+    }
+    if do_vectors_match(languages, available_resources) {
+
+    } else {
+        eprintln!("{}", "Language resources don't match up. Please remove unused languages from manifest.xml.".bright_red().bold());
+        std::process::exit(1);
+    }
+}
+
+fn do_vectors_match<T: PartialEq>(a: Vec<T>, b: Vec<T>) -> bool {
+    let matching = a.iter().zip(b.iter()).filter(|&(a, b)| a == b).count();
+    matching == a.len() && matching == b.len()
 }
 
 fn get_languages_from_manifest(manifest: String) -> Vec<String> {
