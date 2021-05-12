@@ -1,5 +1,5 @@
 [package]
-name = "GarBuild"
+name = "garbuild"
 version = "0.1.0"
 authors = ["ggoraa <ggoraa1029@gmail.com>"]
 edition = "2018"
@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 switch_statement = "1.0.0"
+minidom = "0.13.0"
