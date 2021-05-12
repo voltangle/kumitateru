@@ -7,7 +7,7 @@ use colored::Colorize;
 const BUILD_COMMAND: &str = "build";
 
 fn main() {
-    let command = std::env::args().nth(1).expect("command");
+    let command = std::env::args().nth(1).expect("No command was passed");
 
     // Check what command was in here
     switch_statement::switch! { command;
