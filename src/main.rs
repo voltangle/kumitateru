@@ -7,7 +7,16 @@ use colored::Colorize;
 const BUILD_COMMAND: &str = "build";
 
 fn main() {
-    let command = std::env::args().nth(1).expect("No command was passed");
+    let command: String;
+    match std::env::args().nth(1) {
+        None => {
+            eprintln!("{}", "No command was passed to GarBuild. Exiting...".bright_red().bold());
+            std::process::exit(1);
+        }
+        Some(_command) => {
+            command = _command;
+        }
+    }
 
     // Check what command was in here
     switch_statement::switch! { command;
