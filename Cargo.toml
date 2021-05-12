@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 switch_statement = "1.0.0"
 minidom = "0.13.0"
+colored = "2.0.0"
