@@ -9,7 +9,7 @@ fn main() {
     let command = std::env::args().nth(1).expect("command");
 
     // Check what command was in here
-    match command {
+    switch_statement::switch! { command;
         BUILD_COMMAND => {
             println!("Building project...");
             println!("Step 1: Assemble a Connect IQ Project");
