@@ -23,8 +23,9 @@ fn main() {
     switch_statement::switch! { command;
         BUILD_COMMAND => {
             println!("Building project...");
-            println!("{} {}", "Step 1:".bold().green(), "Verify project structure");
+            println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure");
             construct_connectiq_project();
+            println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project");
         },
         _ => println!("No command found."),
     }
