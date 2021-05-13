@@ -2,8 +2,9 @@ mod prepare_build;
 mod utils;
 
 use switch_statement;
-use prepare_build::construct_connectiq_project;
 use colored::Colorize;
+use crate::utils::verify_project::verify_project;
+use crate::prepare_build::construct_connectiq_project;
 
 const BUILD_COMMAND: &str = "build";
 
@@ -24,8 +25,9 @@ fn main() {
         BUILD_COMMAND => {
             println!("Building project...");
             println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure");
-            construct_connectiq_project();
+            verify_project();
             println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project");
+            construct_connectiq_project();
         },
         _ => println!("No command found."),
     }
