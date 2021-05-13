@@ -66,7 +66,10 @@ pub fn verify_project() {
             Ok(entry) => {
                 match entry.file_name().into_string() {
                     Ok(entry) => {
-                        available_resources.push(entry);
+                        if entry != ".DS_Store" {
+                            println!("{} {}", "Detected a language resource:", entry);
+                            available_resources.push(entry);
+                        }
                     }
                     Err(_) => {
                         eprintln!("{}", "Something had gone wrong while reading files. Exiting...".bright_red());
