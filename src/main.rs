@@ -1,4 +1,5 @@
 mod prepare_build;
+mod utils;
 
 use switch_statement;
 use prepare_build::construct_connectiq_project;
@@ -22,7 +23,7 @@ fn main() {
     switch_statement::switch! { command;
         BUILD_COMMAND => {
             println!("Building project...");
-            println!("{} {}", "Step 1:".bold().green(), "Assemble a Connect IQ Project");
+            println!("{} {}", "Step 1:".bold().green(), "Verify project structure");
             construct_connectiq_project();
         },
         _ => println!("No command found."),
