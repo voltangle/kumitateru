@@ -86,6 +86,7 @@ pub fn verify_project() {
         eprintln!("{}", "Language resources don't match up. Please remove unused languages from manifest.xml.".bright_red().bold());
         std::process::exit(1);
     }
+    println!("{}", "Successfully verified project structure!".bold().green())
 }
 
 fn get_languages_from_manifest(manifest: String) -> Vec<String> {
