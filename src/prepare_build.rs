@@ -107,13 +107,17 @@ fn get_languages_from_manifest(manifest: String) -> Vec<String> {
             let language_children = children.get_child("languages", "http://www.garmin.com/xml/connectiq");
             match language_children {
                 None => {
-                    eprintln!("{}. {}", "No languages found in manifest.xml.".red(), "Have you declared any?".bold());
+                    eprintln!("{} {} {} {}?", "No languages found in manifest.xml.".red(), "Have you added an".bold(), "<iq:languages>".bold().green(), "block".bold());
                     std::process::exit(1);
                 }
                 Some(element) => {
                     for child in element.children() {
                         println!("{} {}", "Detected a language:", child.text().bold().green());
                         languages.push(child.text());
+                    }
+                    if languages.is_empty() {
+                        eprintln!("{} {} {} {}?", "No languages found in manifest.xml.".red(), "Have you".bold(), "declared".bold().green(), "any".bold());
+                        std::process::exit(1);
                     }
                 }
             }
