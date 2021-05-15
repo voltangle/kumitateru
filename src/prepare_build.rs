@@ -1,7 +1,6 @@
 use colored::Colorize;
 use std::fs;
-use std::path::{Path, PathBuf};
-use std::io::Error;
+use std::path::PathBuf;
 
 /// This function gathers all files from resources and
 /// src directories, and transfers them in build/proj,
@@ -20,28 +19,29 @@ pub fn construct_connectiq_project() {
         }
     }
 
-    let mut source_files:Vec<PathBuf> = Vec::new();
+    println!("first");
+    let source_files = list_sources(PathBuf::from("src")).0;
+    println!("second");
+    let source_dirs = list_sources(PathBuf::from("src")).1;
+    println!("{:?}", source_files);
+    println!("{:?}", source_dirs);
 
-    for file in fs::read_dir("src").unwrap() {
-        println!("{:?}", file);
-        let file = file.unwrap();
-        if file.file_type().unwrap().is_file() {
-            source_files.push(file.path());
-        } else {
-            eprintln!("{}", "Currently nested files in src are not supported. Please move everything to the root.".red().bold());
-            std::process::exit(1);
-        }
+    for dir in source_dirs.clone() {
+        let mut new_destination: PathBuf = ["build", "tmp", "source"].iter().collect();
+        let mut new_entry = String::from(dir.clone().to_str().unwrap());
+        new_entry.replace_range(0..4, "");
+        new_destination.push(new_entry.clone());
+        fs::create_dir(new_destination);
     }
 
-    for file in source_files {
-        let file = file.to_str().unwrap().rsplit("/").next().unwrap();
-        let mut start_destination = PathBuf::from("src");
-        start_destination.push(file.clone());
+    for entry in source_files.clone() {
+        let mut start_destination = entry.clone();
         let mut new_destination: PathBuf = ["build", "tmp", "source"].iter().collect();
-        new_destination.push(file.clone());
+        let mut new_entry = String::from(entry.clone().to_str().unwrap());
+        new_entry.replace_range(0..4, "");
+        new_destination.push(new_entry.clone());
         println!("{:?}", start_destination);
         println!("{:?}", new_destination);
-
 
         match fs::copy(start_destination, new_destination) {
             Ok(_) => {}
@@ -50,4 +50,21 @@ pub fn construct_connectiq_project() {
             }
         }
     }
+}
+
+fn list_sources(path: PathBuf) -> (Vec<PathBuf>, Vec<PathBuf>) {
+    let mut source_files: Vec<PathBuf> = Vec::new();
+    let mut source_dirs: Vec<PathBuf> = Vec::new();
+    for entry in fs::read_dir(path).unwrap() {
+        let entry = entry.unwrap();
+        if entry.file_type().unwrap().is_file() {
+            source_files.push(entry.path());
+            println!("is file");
+        } else {
+            source_dirs.push(entry.path());
+            println!("is dir");
+            source_files.append(&mut list_sources(PathBuf::from(entry.path())).0);
+        }
+    }
+    return (source_files, source_dirs)
 }
