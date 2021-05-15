@@ -22,7 +22,7 @@ jobs:
       run: cargo test --verbose
 
     - name: Upload built artifact
-      uses: actions/upload-artifact@2
+      uses: actions/upload-artifact@v2
       with:
         name: Executable
         path: target/debug/garbuild
