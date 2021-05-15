@@ -12,20 +12,13 @@ pub fn construct_connectiq_project() {
     fs::create_dir("build/tmp/resources");
 
     println!("{}", "Copying basic files and source code...".bold());
-    match fs::copy("manifest.xml", "build/tmp/manifest.xml") {
-        Ok(_) => {}
-        Err(_) => {
-            eprintln!("{}", "Failed to copy manifest.xml.".red().bold());
-        }
-    }
+    fs::copy("manifest.xml", "build/tmp/manifest.xml");
+    fs::copy("monkey.jungle", "build/tmp/monkey.jungle");
 
-    println!("first");
     let source_files = list_sources(PathBuf::from("src")).0;
-    println!("second");
     let source_dirs = list_sources(PathBuf::from("src")).1;
-    println!("{:?}", source_files);
-    println!("{:?}", source_dirs);
 
+    // Creating directory structure
     for dir in source_dirs.clone() {
         let mut new_destination: PathBuf = ["build", "tmp", "source"].iter().collect();
         let mut new_entry = String::from(dir.clone().to_str().unwrap());
@@ -34,21 +27,15 @@ pub fn construct_connectiq_project() {
         fs::create_dir(new_destination);
     }
 
+    // And then copying files
     for entry in source_files.clone() {
-        let mut start_destination = entry.clone();
+        let start_destination = entry.clone();
         let mut new_destination: PathBuf = ["build", "tmp", "source"].iter().collect();
         let mut new_entry = String::from(entry.clone().to_str().unwrap());
         new_entry.replace_range(0..4, "");
         new_destination.push(new_entry.clone());
-        println!("{:?}", start_destination);
-        println!("{:?}", new_destination);
 
-        match fs::copy(start_destination, new_destination) {
-            Ok(_) => {}
-            Err(_) => {
-                eprintln!("Failed");
-            }
-        }
+        fs::copy(start_destination, new_destination);
     }
 }
 
@@ -59,10 +46,8 @@ fn list_sources(path: PathBuf) -> (Vec<PathBuf>, Vec<PathBuf>) {
         let entry = entry.unwrap();
         if entry.file_type().unwrap().is_file() {
             source_files.push(entry.path());
-            println!("is file");
         } else {
             source_dirs.push(entry.path());
-            println!("is dir");
             source_files.append(&mut list_sources(PathBuf::from(entry.path())).0);
         }
     }
