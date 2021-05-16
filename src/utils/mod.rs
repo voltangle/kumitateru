@@ -1,2 +1,1 @@
-pub(crate) mod verify_project;
-mod do_vectors_match;
+pub(crate) mod do_vectors_match;
