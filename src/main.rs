@@ -13,7 +13,7 @@ fn main() {
     let command: String;
     match std::env::args().nth(1) {
         None => {
-            eprintln!("{}", "No command was passed to GarBuild. Exiting...".bright_red().bold());
+            eprintln!("{}", "No command was passed to Kumitateru. Exiting...".bright_red().bold());
             std::process::exit(1);
         }
         Some(_command) => {
