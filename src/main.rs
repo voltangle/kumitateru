@@ -1,9 +1,10 @@
 mod prepare_build;
 mod utils;
+mod verify_project;
 
 use switch_statement;
 use colored::Colorize;
-use crate::utils::verify_project::verify_project;
+use crate::verify_project::verify_project;
 use crate::prepare_build::construct_connectiq_project;
 
 const BUILD_COMMAND: &str = "build";
