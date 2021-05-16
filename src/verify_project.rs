@@ -46,7 +46,8 @@ pub fn verify_project() {
 
     // Get languages from the manifest
     println!("{}", "Reading manifest...".bold());
-    let languages = get_languages_from_manifest(fs::read_to_string(manifest_location).expect("No manifest.xml was found"));
+    let manifest_string = fs::read_to_string(manifest_location.clone()).expect("No manifest.xml was found");
+    let languages = get_languages_from_manifest(manifest_string.clone());
 
     let string_resource_directories: ReadDir;
     match fs::read_dir(resources_strings_location) {
@@ -83,12 +84,35 @@ pub fn verify_project() {
             }
         }
     }
-    if do_vectors_match(languages, available_resources) {
-
-    } else {
+    if do_vectors_match(languages, available_resources) {} else {
         eprintln!("{}", "Language resources don't match up. Please remove unused languages from manifest.xml.".bright_red().bold());
         std::process::exit(1);
     }
+    // Next step: check for device-specific resources, that reference not-supported devices(not declared in manifest)
+    let products_manifest = get_devices_from_manifest(manifest_string.clone());
+    let mut products_resources: Vec<String> = Vec::new();
+
+    for entry in fs::read_dir("resources/drawables") {
+        for entry in entry {
+            let entry = entry.unwrap();
+            let entry_string = entry.file_name().into_string().unwrap();
+            if entry_string != ".DS_Store" || entry.file_type().unwrap().is_dir() {
+                products_resources.push(entry_string);
+            }
+        }
+    }
+    // Check device-specific resources in drawables
+    if products_resources.len() > 0 {
+        for res in products_resources {
+            if !products_manifest.contains(&res) {
+                eprintln!("Detected device-specific resource declarations for devices that \
+                are not declared as supported in manifest. Please, \
+                remove these resources, or add missing device in manifest.");
+                std::process::exit(1);
+            }
+        }
+    }
+
     println!("{}", "Successfully verified project structure!".bold().green())
 }
 
@@ -120,4 +144,33 @@ fn get_languages_from_manifest(manifest: String) -> Vec<String> {
     }
 
     return languages;
+}
+
+fn get_devices_from_manifest(manifest: String) -> Vec<String> {
+    println!("{}", "Checking devices...".bold());
+    let root: Element = manifest.parse().unwrap();
+    let mut devices: Vec<String> = Vec::new();
+
+    for children in root.children() {
+        if children.is("application", "http://www.garmin.com/xml/connectiq") {
+            let products_children = children.get_child("products", "http://www.garmin.com/xml/connectiq");
+            match products_children {
+                None => {
+                    eprintln!("{} {} {} {}?", "No products found in manifest.xml.".red(), "Have you added an".bold(), "<iq:products>".bold().green(), "block".bold());
+                    std::process::exit(1);
+                }
+                Some(element) => {
+                    for child in element.children() {
+                        devices.push(child.text());
+                    }
+                    if devices.is_empty() {
+                        eprintln!("{} {} {} {}?", "No products found in manifest.xml.".red(), "Have you".bold(), "declared".bold().green(), "any".bold());
+                        std::process::exit(1);
+                    }
+                }
+            }
+        }
+    }
+
+    return devices;
 }
