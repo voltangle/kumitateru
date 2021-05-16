@@ -90,30 +90,44 @@ pub fn verify_project() {
     }
     // Next step: check for device-specific resources, that reference not-supported devices(not declared in manifest)
     let products_manifest = get_devices_from_manifest(manifest_string.clone());
-    let mut products_resources: Vec<String> = Vec::new();
-
-    for entry in fs::read_dir("resources/drawables") {
+    // Check device-specific resources
+    for entry in fs::read_dir("resources") {
         for entry in entry {
             let entry = entry.unwrap();
-            let entry_string = entry.file_name().into_string().unwrap();
-            if entry_string != ".DS_Store" || entry.file_type().unwrap().is_dir() {
-                products_resources.push(entry_string);
+
+            // This is needed to skip strings, because they contain folders with translated strings, instead of device-specific ones.
+            if entry.path() == PathBuf::from("resources/strings") {
+                continue; // Exits the loop
             }
-        }
-    }
-    // Check device-specific resources in drawables
-    if products_resources.len() > 0 {
-        for res in products_resources {
-            if !products_manifest.contains(&res) {
-                eprintln!("Detected device-specific resource declarations for devices that \
-                are not declared as supported in manifest. Please, \
-                remove these resources, or add missing device in manifest.");
-                std::process::exit(1);
+            let mut resources: Vec<String> = Vec::new();
+
+            for entry in fs::read_dir(entry.path()) {
+                for entry in entry {
+                    let entry = entry.unwrap();
+                    let entry_string = entry.file_name().into_string().unwrap();
+                    if entry_string != ".DS_Store" || entry.file_type().unwrap().is_dir() {
+                        resources.push(entry_string);
+                    }
+                }
             }
+            match_device_resources(products_manifest.clone(), resources.clone())
         }
     }
 
     println!("{}", "Successfully verified project structure!".bold().green())
+}
+
+fn match_device_resources(manifest: Vec<String>, res: Vec<String>) {
+    if res.len() > 0 {
+        for res in res {
+            if !manifest.contains(&res) {
+                eprintln!("{}", "Detected device-specific resource declarations for devices that \
+                are not declared as supported in manifest. Please, \
+                remove these resources, or add missing device in manifest.".red().bold());
+                std::process::exit(1);
+            }
+        }
+    }
 }
 
 fn get_languages_from_manifest(manifest: String) -> Vec<String> {
