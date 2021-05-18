@@ -11,11 +11,11 @@ Build config sits in the root of the project, and named `kumitateru.toml`. It lo
 name = "MyApp"
 main_class = "MyAppMainClass"
 app_type = "watch-app"
+min_sdk = "1.2.0"
 
 [package-meta]
 id = "app-id"
 version = "1.0.0"
-min_sdk = "1.2.0"
 icon = "@Drawables.LauncherIcon"
 devices = [
     "fr945",
