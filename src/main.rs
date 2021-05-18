@@ -7,7 +7,7 @@ use colored::Colorize;
 use std::fs;
 use crate::verify_project::verify_project;
 use crate::prepare_build::construct_connectiq_project;
-use crate::utils::manifest_utils::generate_manifest;
+use crate::utils::manifest_utils::generate_ciq_manifest;
 
 const BUILD_COMMAND: &str = "build";
 
@@ -30,8 +30,9 @@ fn main() {
             println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure");
             verify_project();
             println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project");
-            generate_manifest(fs::read_to_string("kumitateru.toml").unwrap());
-            construct_connectiq_project();
+            construct_connectiq_project(
+                generate_ciq_manifest(fs::read_to_string("kumitateru.toml").unwrap())
+            );
         },
         _ => println!("No command found."),
     }

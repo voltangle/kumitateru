@@ -5,15 +5,13 @@ use std::path::PathBuf;
 /// This function gathers all files from resources and
 /// src directories, and transfers them in build/proj,
 /// where it will be built by monkeyc.
-pub fn construct_connectiq_project() {
+pub fn construct_connectiq_project(manifest: String) {
     fs::create_dir("build");
     fs::create_dir("build/tmp");
     fs::create_dir("build/tmp/source");
     fs::create_dir("build/tmp/resources");
 
-    println!("{}", "Copying basic files and source code...".bold());
-    fs::copy("manifest.xml", "build/tmp/manifest.xml");
-    fs::copy("monkey.jungle", "build/tmp/monkey.jungle");
+    println!("{}", "Copying source code...".bold());
 
     let source_files = list_sources(PathBuf::from("src")).0;
     let source_dirs = list_sources(PathBuf::from("src")).1;
@@ -37,6 +35,7 @@ pub fn construct_connectiq_project() {
 
         fs::copy(start_destination, new_destination);
     }
+    println!("{}", "Preparing language resources...".bold());
 }
 
 fn list_sources(path: PathBuf) -> (Vec<PathBuf>, Vec<PathBuf>) {
