@@ -6,44 +6,44 @@ use yaserde_derive::YaSerialize;
 use yaserde::ser::to_string;
 use yaserde::de::from_str;
 
-pub fn generate_ciq_manifest(toml_config: String) -> &'static str {
+pub fn generate_ciq_manifest(toml_config: String) -> String {
     let parsed_config: Config = toml::from_str(&*toml_config).unwrap();
+
+    let mut ciq_products: Vec<CIQProduct> = Vec::new();
+    let mut ciq_permissions: Vec<CIQPermission> = Vec::new();
+    let mut ciq_languages: Vec<String> = Vec::new();
+
+    for entry in parsed_config.package_meta.devices {
+        ciq_products.push(CIQProduct{ id: entry })
+    }
+    for entry in parsed_config.package_meta.permissions {
+        ciq_permissions.push(CIQPermission{ id: entry })
+    }
+    for entry in parsed_config.package_meta.languages {
+        ciq_languages.push(entry)
+    }
 
     let manifest_struct = CIQManifest {
         xmlns: "http://www.garmin.com/xml/connectiq".parse().unwrap(),
         version: 3,
         application: CIQApplication {
-            entry: "WheelLogCompanionApp".to_string(),
-            app_type: "watch-app".to_string(),
-            id: "a4db".to_string(),
-            launcher_icon: "Drawables".to_string(),
-            name: "AppName".to_string(),
-            version: "2.0.0".to_string(),
-            min_sdk_version: "1.2.0".to_string(),
+            entry: parsed_config.package.main_class,
+            app_type: parsed_config.package.app_type,
+            id: parsed_config.package_meta.id,
+            launcher_icon: parsed_config.package_meta.icon_resource,
+            name: parsed_config.package.name,
+            version: parsed_config.package_meta.version,
+            min_sdk_version: parsed_config.package.min_sdk,
             products: CIQProducts {
-                product: vec![
-                    CIQProduct { id: "id".parse().unwrap() },
-                    CIQProduct { id: "id2".parse().unwrap() }
-                ]
+                product: ciq_products
             },
             permissions: CIQPermissions {
-                uses_permission: vec![
-                    CIQPermission { id: "d".to_string() },
-                    CIQPermission { id: "a".to_string() },
-                    CIQPermission { id: "f".to_string() },
-                    CIQPermission { id: "g".to_string() },
-                    CIQPermission { id: "h".to_string() },
-                ]
+                uses_permission: ciq_permissions
             },
-            languages: CIQLanguages { language: vec![
-                "ddd".to_string(),
-                "ddd".to_string()
-            ] }
+            languages: CIQLanguages { language: ciq_languages }
         }
     };
-    let manifest = to_string(&manifest_struct);
-    println!("{}", manifest.unwrap());
-    return ""
+    return to_string(&manifest_struct).unwrap()
 }
 
 pub fn get_languages_from_manifest(manifest: String) -> Vec<String> {
