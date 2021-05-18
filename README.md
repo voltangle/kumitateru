@@ -27,6 +27,7 @@ languages = [
     "eng"
 ]
 
+# This block does not affect anything, it is just there for the future
 [dependencies]
 "simple-barrel" = "0.1.0"
 ```
