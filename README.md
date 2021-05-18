@@ -1,5 +1,5 @@
 # Kumitateru
-Kumitateru is a build system for Garmin ConnectIQ
+Kumitateru is a build system for Garmin ConnectIQ, written in Rust.
 
 Currently in development, so you can't use it.
 
