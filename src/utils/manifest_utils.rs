@@ -1,10 +1,8 @@
 use minidom::Element;
 use colored::Colorize;
 use crate::utils::config::Config;
-use std::fs;
 use yaserde_derive::YaSerialize;
 use yaserde::ser::to_string;
-use yaserde::de::from_str;
 
 pub fn generate_ciq_manifest(toml_config: String) -> String {
     let parsed_config: Config = toml::from_str(&*toml_config).unwrap();
@@ -80,7 +78,7 @@ pub fn get_devices_from_manifest(manifest: String) -> Vec<String> {
     let mut devices: Vec<String> = Vec::new();
 
     for children in root.children() {
-        if children.is("Application", "http://www.garmin.com/xml/connectiq") {
+        if children.is("application", "http://www.garmin.com/xml/connectiq") {
             let products_children = children.get_child("products", "http://www.garmin.com/xml/connectiq");
             match products_children {
                 None => {
@@ -89,7 +87,9 @@ pub fn get_devices_from_manifest(manifest: String) -> Vec<String> {
                 }
                 Some(element) => {
                     for child in element.children() {
-                        devices.push(child.text());
+                        for child in child.attrs() {
+                            devices.push(child.1.to_string());
+                        }
                     }
                     if devices.is_empty() {
                         eprintln!("{} {} {} {}?", "No products found in manifest.xml.".red(), "Have you".bold(), "declared".bold().green(), "any".bold());

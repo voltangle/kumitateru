@@ -4,6 +4,7 @@ use colored::Colorize;
 use std::path::PathBuf;
 use crate::utils::do_vectors_match::do_vectors_match;
 use crate::utils::manifest_utils::{get_devices_from_manifest, get_languages_from_manifest};
+use std::borrow::Cow;
 
 pub fn verify_project() {
     let mut manifest_location: PathBuf;
@@ -96,7 +97,7 @@ pub fn verify_project() {
 
             // This is needed to skip strings, because they contain folders with translated strings, instead of device-specific ones.
             if entry.path() == PathBuf::from("resources/strings") {
-                continue; // Exits the loop
+                continue; // Continues to the next index, skipping next code
             }
             let mut resources: Vec<String> = Vec::new();
 
@@ -105,9 +106,7 @@ pub fn verify_project() {
                     let entry = entry.unwrap();
                     if entry.file_type().unwrap().is_dir() {
                         let entry_string = entry.file_name().into_string().unwrap();
-                        if entry_string != ".DS_Store" || entry.file_type().unwrap().is_dir() {
-                            resources.push(entry_string);
-                        }
+                        resources.push(basename(&*entry_string, '/').to_string());
                     }
                 }
             }
@@ -116,6 +115,14 @@ pub fn verify_project() {
     }
 
     println!("{}", "Successfully verified project structure!".bold().green())
+}
+
+fn basename(path: &str, sep: char) -> Cow<str> {
+    let mut pieces = path.rsplit(sep);
+    match pieces.next() {
+        Some(p) => p.into(),
+        None => path.into(),
+    }
 }
 
 fn match_device_resources(manifest: Vec<String>, res: Vec<String>) {
