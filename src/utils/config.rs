@@ -18,7 +18,7 @@ pub struct ConfigPackage {
 pub struct ConfigPackageMeta {
     pub id: String,
     pub version: String,
-    pub icon: String,
+    pub icon_resource: String,
     pub devices: Box<[String]>,
     pub permissions: Box<[String]>,
     pub languages: Box<[String]>,
