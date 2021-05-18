@@ -1,5 +1,5 @@
 # Kumitateru
-Kumitateru is a project for making Garmin Connect IQ projects look better, and easier to manage.
+Kumitateru is a build system for Garmin ConnectIQ
 
 Currently in development, so you can't use it.
 
@@ -48,6 +48,6 @@ languages = [
 
 ```
 
-For now Kumitateru does not support external
-dependencies(or barrels, as Garmin calls them),
-but I will figure out later how to add them.
+For now Kumitateru does not support external dependencies(or barrels, as Garmin calls them),
+but I will figure out later how to add them, specifically when i will learn the full structure
+of Connect IQ manifest and monkey.jungle. 
