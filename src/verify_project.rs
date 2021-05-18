@@ -68,7 +68,6 @@ pub fn verify_project() {
                 match entry.file_name().into_string() {
                     Ok(entry) => {
                         if entry != ".DS_Store" {
-                            println!("{} {}", "Detected a language resource:", entry);
                             available_resources.push(entry);
                         }
                     }
