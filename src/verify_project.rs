@@ -103,9 +103,11 @@ pub fn verify_project() {
             for entry in fs::read_dir(entry.path()) {
                 for entry in entry {
                     let entry = entry.unwrap();
-                    let entry_string = entry.file_name().into_string().unwrap();
-                    if entry_string != ".DS_Store" || entry.file_type().unwrap().is_dir() {
-                        resources.push(entry_string);
+                    if entry.file_type().unwrap().is_dir() {
+                        let entry_string = entry.file_name().into_string().unwrap();
+                        if entry_string != ".DS_Store" || entry.file_type().unwrap().is_dir() {
+                            resources.push(entry_string);
+                        }
                     }
                 }
             }
