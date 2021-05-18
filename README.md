@@ -18,34 +18,17 @@ id = "app-id"
 version = "1.0.0"
 icon = "@Drawables.LauncherIcon"
 devices = [
-    "fr945",
-    "fenix3",
-    "fenix3_hr",
-    "fenix5",
-    "fenix5plus",
-    "fenix5s",
-    "fenix5splus",
-    "fenix6",
-    "fenix6pro",
-    "fenix6s",
-    "fenix6spro",
-    "fenix6xpro",
-    "fenixchronos",
-    "vivoactive3",
-    "vivoactive3d",
-    "vivoactive3m",
-    "vivoactive3mlte",
-    "vivoactive4",
-    "vivoactive4s",
+    "fenix6x"
 ]
 permissions = [
     "Communications"
 ]
 languages = [
-    "eng",
-    "rus",
+    "eng"
 ]
 
+[dependencies]
+"simple-barrel" = "0.1.0"
 ```
 
 For now Kumitateru does not support external dependencies(or barrels, as Garmin calls them),
