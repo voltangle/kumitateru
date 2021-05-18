@@ -11,13 +11,13 @@ pub struct ConfigPackage {
     pub name: String,
     pub main_class: String,
     pub app_type: String,
+    pub min_sdk: String,
 }
 
 #[derive(Deserialize)]
 pub struct ConfigPackageMeta {
     pub id: String,
     pub version: String,
-    pub min_sdk: String,
     pub icon: String,
     pub devices: Box<[String]>,
     pub permissions: Box<[String]>,
