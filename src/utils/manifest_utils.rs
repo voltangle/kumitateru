@@ -1,11 +1,11 @@
 use minidom::Element;
 use colored::Colorize;
-use crate::utils::config::Config;
+use crate::utils::config::AppConfig;
 use yaserde_derive::YaSerialize;
 use yaserde::ser::to_string;
 
 pub fn generate_ciq_manifest(toml_config: String) -> String {
-    let parsed_config: Config = toml::from_str(&*toml_config).unwrap();
+    let parsed_config: AppConfig = toml::from_str(&*toml_config).unwrap();
 
     let mut ciq_products: Vec<CIQProduct> = Vec::new();
     let mut ciq_permissions: Vec<CIQPermission> = Vec::new();
@@ -41,7 +41,26 @@ pub fn generate_ciq_manifest(toml_config: String) -> String {
             languages: CIQLanguages { language: ciq_languages }
         }
     };
-    return to_string(&manifest_struct).unwrap()
+    let mut serialized_manifest = to_string(&manifest_struct).unwrap();
+
+    // And then a series of string replaces for adding iq namespace
+    serialized_manifest = serialized_manifest
+        .replace("<manifest", "<iq:manifest")
+        .replace("</manifest", "</iq:manifest")
+        .replace("xmlns", "xmlns:iq")
+        .replace("<application", "<iq:application")
+        .replace("</application", "</iq:application")
+        .replace("<products", "<iq:products")
+        .replace("</products", "</iq:products")
+        .replace("<product", "<iq:product")
+        .replace("<permissions", "<iq:permissions")
+        .replace("</permissions", "</iq:permissions")
+        .replace("<uses-permission", "<iq:uses-permission")
+        .replace("<languages", "<iq:languages")
+        .replace("</languages", "</iq:languages")
+        .replace("<language", "<iq:language")
+        .replace("</language", "</iq:language");
+    return serialized_manifest
 }
 
 pub fn get_languages_from_manifest(manifest: String) -> Vec<String> {
