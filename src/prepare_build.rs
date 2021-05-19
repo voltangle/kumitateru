@@ -13,6 +13,9 @@ pub fn construct_connectiq_project(manifest: String) {
 
     println!("{}", "Copying source code...".bold());
 
+    fs::File::create(PathBuf::from("build/tmp/manifest.xml"));
+    fs::write(PathBuf::from("build/tmp/manifest.xml"), manifest);
+
     let source_files = list_sources(PathBuf::from("src")).0;
     let source_dirs = list_sources(PathBuf::from("src")).1;
 
