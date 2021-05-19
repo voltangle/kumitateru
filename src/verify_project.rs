@@ -5,19 +5,9 @@ use std::path::PathBuf;
 use crate::utils::do_vectors_match::do_vectors_match;
 use crate::utils::manifest_utils::{get_devices_from_manifest, get_languages_from_manifest};
 use std::borrow::Cow;
+use crate::utils::config::parse_config;
 
 pub fn verify_project() {
-    let mut manifest_location: PathBuf;
-    match std::env::current_dir() {
-        Ok(dir) => {
-            manifest_location = dir;
-            manifest_location.push("manifest.xml");
-        }
-        Err(_) => {
-            eprintln!("{}", "Failed to get current working directory. Exiting...".bright_red());
-            std::process::exit(1);
-        }
-    }
     let mut resources_location: PathBuf;
     match std::env::current_dir() {
         Ok(dir) => {
@@ -46,9 +36,9 @@ pub fn verify_project() {
     // First step: compare available string.xml files to available languages in manifest.xml
 
     // Get languages from the manifest
-    println!("{}", "Reading manifest...".bold());
-    let manifest_string = fs::read_to_string(manifest_location.clone()).expect("No manifest.xml was found");
-    let languages = get_languages_from_manifest(manifest_string.clone());
+    println!("{}", "Reading config...".bold());
+    let config_string = fs::read_to_string(PathBuf::from("kumitateru.toml")).expect("No kumitateru.toml was found");
+    let parsed_config = parse_config(config_string.clone());
 
     let string_resource_directories: ReadDir;
     match fs::read_dir(resources_strings_location) {
@@ -84,12 +74,11 @@ pub fn verify_project() {
             }
         }
     }
-    if do_vectors_match(languages, available_resources) {} else {
+    if do_vectors_match(parsed_config.clone().package_meta.languages, available_resources) {} else {
         eprintln!("{}", "Language resources don't match up. Please remove unused languages from manifest.xml.".bright_red().bold());
         std::process::exit(1);
     }
     // Next step: check for device-specific resources, that reference not-supported devices(not declared in manifest)
-    let products_manifest = get_devices_from_manifest(manifest_string.clone());
     // Check device-specific resources
     for entry in fs::read_dir("resources") {
         for entry in entry {
@@ -110,7 +99,7 @@ pub fn verify_project() {
                     }
                 }
             }
-            match_device_resources(products_manifest.clone(), resources.clone())
+            match_device_resources(parsed_config.clone().package_meta.devices, resources.clone())
         }
     }
 
