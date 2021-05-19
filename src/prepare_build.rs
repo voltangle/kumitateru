@@ -1,6 +1,6 @@
 use colored::Colorize;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 
 /// This function gathers all files from resources and
 /// src directories, and transfers them in build/proj,
@@ -16,42 +16,52 @@ pub fn construct_connectiq_project(manifest: String) {
     fs::File::create(PathBuf::from("build/tmp/manifest.xml"));
     fs::write(PathBuf::from("build/tmp/manifest.xml"), manifest);
 
-    let source_files = list_sources(PathBuf::from("src")).0;
-    let source_dirs = list_sources(PathBuf::from("src")).1;
-
-    // Creating directory structure
-    for dir in source_dirs.clone() {
-        let mut new_destination: PathBuf = ["build", "tmp", "source"].iter().collect();
-        let mut new_entry = String::from(dir.clone().to_str().unwrap());
-        new_entry.replace_range(0..4, "");
-        new_destination.push(new_entry.clone());
-        fs::create_dir(new_destination);
-    }
-
-    // And then copying files
-    for entry in source_files.clone() {
-        let start_destination = entry.clone();
-        let mut new_destination: PathBuf = ["build", "tmp", "source"].iter().collect();
-        let mut new_entry = String::from(entry.clone().to_str().unwrap());
-        new_entry.replace_range(0..4, "");
-        new_destination.push(new_entry.clone());
-
-        fs::copy(start_destination, new_destination);
-    }
+    copy(PathBuf::from("src"), PathBuf::from("build/tmp/source"));
     println!("{}", "Preparing language resources...".bold());
+
 }
 
-fn list_sources(path: PathBuf) -> (Vec<PathBuf>, Vec<PathBuf>) {
-    let mut source_files: Vec<PathBuf> = Vec::new();
-    let mut source_dirs: Vec<PathBuf> = Vec::new();
-    for entry in fs::read_dir(path).unwrap() {
-        let entry = entry.unwrap();
-        if entry.file_type().unwrap().is_file() {
-            source_files.push(entry.path());
+
+// Big thanks to https://stackoverflow.com/a/60406693
+fn copy<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> Result<(), std::io::Error> {
+    let mut stack = Vec::new();
+    stack.push(PathBuf::from(from.as_ref()));
+
+    let output_root = PathBuf::from(to.as_ref());
+    let input_root = PathBuf::from(from.as_ref()).components().count();
+
+    while let Some(working_path) = stack.pop() {
+        // Generate a relative path
+        let src: PathBuf = working_path.components().skip(input_root).collect();
+
+        // Create a destination if missing
+        let dest = if src.components().count() == 0 {
+            output_root.clone()
         } else {
-            source_dirs.push(entry.path());
-            source_files.append(&mut list_sources(PathBuf::from(entry.path())).0);
+            output_root.join(&src)
+        };
+        if fs::metadata(&dest).is_err() {
+            fs::create_dir_all(&dest)?;
+        }
+
+        for entry in fs::read_dir(working_path)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+            } else {
+                match path.file_name() {
+                    Some(filename) => {
+                        let dest_path = dest.join(filename);
+                        fs::copy(&path, &dest_path)?;
+                    }
+                    None => {
+                        eprintln!("failed: {:?}", path);
+                    }
+                }
+            }
         }
     }
-    return (source_files, source_dirs)
+
+    Ok(())
 }
