@@ -25,4 +25,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: Executable
-        path: target/debug/garbuild
+        path: target/debug/kumitateru
