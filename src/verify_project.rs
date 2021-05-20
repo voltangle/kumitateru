@@ -3,7 +3,6 @@ use std::fs;
 use colored::Colorize;
 use std::path::PathBuf;
 use crate::utils::do_vectors_match::do_vectors_match;
-use crate::utils::manifest_utils::{get_devices_from_manifest, get_languages_from_manifest};
 use std::borrow::Cow;
 use crate::utils::config::parse_config;
 

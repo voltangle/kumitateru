@@ -1,5 +1,3 @@
-use minidom::Element;
-use colored::Colorize;
 use crate::utils::config::AppConfig;
 use yaserde_derive::YaSerialize;
 use yaserde::ser::to_string;
@@ -61,65 +59,6 @@ pub fn generate_ciq_manifest(toml_config: String) -> String {
         .replace("<language", "<iq:language")
         .replace("</language", "</iq:language");
     return serialized_manifest
-}
-
-pub fn get_languages_from_manifest(manifest: String) -> Vec<String> {
-    let root: Element = manifest.parse().unwrap();
-    let mut languages: Vec<String> = Vec::new();
-
-    for children in root.children() {
-        if children.is("application", "http://www.garmin.com/xml/connectiq") {
-            let language_children = children.get_child("languages", "http://www.garmin.com/xml/connectiq");
-            match language_children {
-                None => {
-                    eprintln!("{} {} {} {}?", "No languages found in manifest.xml.".red(), "Have you added an".bold(), "<iq:languages>".bold().green(), "block".bold());
-                    std::process::exit(1);
-                }
-                Some(element) => {
-                    for child in element.children() {
-                        println!("{} {}", "Detected a language:", child.text().bold().green());
-                        languages.push(child.text());
-                    }
-                    if languages.is_empty() {
-                        eprintln!("{} {} {} {}?", "No languages found in manifest.xml.".red(), "Have you".bold(), "declared".bold().green(), "any".bold());
-                        std::process::exit(1);
-                    }
-                }
-            }
-        }
-    }
-
-    return languages;
-}
-
-pub fn get_devices_from_manifest(manifest: String) -> Vec<String> {
-    let root: Element = manifest.parse().unwrap();
-    let mut devices: Vec<String> = Vec::new();
-
-    for children in root.children() {
-        if children.is("application", "http://www.garmin.com/xml/connectiq") {
-            let products_children = children.get_child("products", "http://www.garmin.com/xml/connectiq");
-            match products_children {
-                None => {
-                    eprintln!("{} {} {} {}?", "No products found in manifest.xml.".red(), "Have you added an".bold(), "<iq:products>".bold().green(), "block".bold());
-                    std::process::exit(1);
-                }
-                Some(element) => {
-                    for child in element.children() {
-                        for child in child.attrs() {
-                            devices.push(child.1.to_string());
-                        }
-                    }
-                    if devices.is_empty() {
-                        eprintln!("{} {} {} {}?", "No products found in manifest.xml.".red(), "Have you".bold(), "declared".bold().green(), "any".bold());
-                        std::process::exit(1);
-                    }
-                }
-            }
-        }
-    }
-
-    return devices;
 }
 
 #[derive(Default, PartialEq, Debug, YaSerialize)]
