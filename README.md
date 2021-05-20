@@ -15,8 +15,6 @@ min_sdk = "1.2.0"
 
 [package-meta]
 id = "app-id"
-version = "1.0.0"
-icon = "@Drawables.LauncherIcon"
 devices = [
     "fenix6x"
 ]
@@ -26,6 +24,11 @@ permissions = [
 languages = [
     "eng"
 ]
+
+[build]
+version = "1.0.0"
+icon_resource = "@Drawables.LauncherIcon"
+signing_key = "id_garmin_sign.der"
 
 # This block does not affect anything, it is just there for the future
 [dependencies]
