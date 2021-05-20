@@ -9,6 +9,7 @@ Build config sits in the root of the project, and named `kumitateru.toml`. It lo
 ```toml
 [package]
 name = "MyApp"
+name_res = "@Strings.AppName"
 main_class = "MyAppMainClass"
 app_type = "watch-app"
 min_sdk = "1.2.0"
