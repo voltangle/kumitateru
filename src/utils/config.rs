@@ -32,6 +32,7 @@ pub struct AppConfigPackageMeta {
 pub struct AppConfigBuild {
     pub version: String,
     pub icon_resource: String,
+    pub signing_key: String,
 }
 
 pub fn parse_config(config: String) -> AppConfig {
