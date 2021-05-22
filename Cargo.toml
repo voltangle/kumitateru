@@ -1,11 +1,10 @@
 [package]
 name = "kumitateru"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["ggoraa <ggoraa1029@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-switch_statement = "1.0.0"
 minidom = "0.13.0"
 colored = "2.0.0"
 toml = "0.5.8"

@@ -14,7 +14,7 @@ use std::path::PathBuf;
 
 fn main() {
     let matches = App::new("Kumitateru")
-        .version("0.1.0")
+        .version("1.0.0")
         .author("GGorAA <yegor_yakovenko@icloud.com>")
         .about("A build system for Garmin ConnectIQ.")
         .arg(Arg::with_name("version")
