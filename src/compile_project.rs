@@ -12,7 +12,7 @@ pub fn compile_project(project: PathBuf, output: PathBuf, target: &str) {
 
 
     if target == "package" {
-        Command::new("monkeyc")
+        let output = Command::new("monkeyc")
             .args(&[
                 "--jungles", jungle_path.to_str().unwrap(),
                 "--package-app",
@@ -23,9 +23,22 @@ pub fn compile_project(project: PathBuf, output: PathBuf, target: &str) {
             ])
             .output()
             .expect("Failed to run monkeyc.");
+        println!("{}", String::from_utf8_lossy(&output.stderr))
+    } else if target == "all" {
+        for device in parsed_config.package_meta.devices {
+            let output = Command::new("monkeyc")
+                .args(&[
+                    "--jungles", jungle_path.to_str().unwrap(),
+                    "--device", &device,
+                    "--output", output_path.to_str().unwrap(),
+                    "--private-key", &parsed_config.build.signing_key,
+                    "--warn"
+                ])
+                .output()
+                .expect("Failed to run monkeyc.");
+            println!("{}", String::from_utf8_lossy(&output.stderr))
+        }
     } else {
-        println!("{}", jungle_path.to_str().unwrap());
-        println!("{}", output_path.to_str().unwrap());
         let output = Command::new("monkeyc")
             .args(&[
                 "--jungles", jungle_path.to_str().unwrap(),
