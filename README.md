@@ -62,3 +62,8 @@ signing_key = "id_garmin_sign.der"
 For now Kumitateru does not support external dependencies(or barrels, as Garmin calls them),
 but I will figure out later how to add them, specifically when i will learn the full structure
 of Connect IQ manifest and monkey.jungle. 
+
+## Using the build system
+Basic build command is `./kumitateru build`, which compiles the app in .iq format. To build
+for a specific device, run `./kumitateru build --target <device>`. To build for all devices
+in .prg, you run `./kumitateru build --target all`.
