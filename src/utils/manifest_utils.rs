@@ -26,9 +26,9 @@ pub fn generate_ciq_manifest(toml_config: String) -> String {
             entry: parsed_config.package.main_class,
             app_type: parsed_config.package.app_type,
             id: parsed_config.package_meta.id,
-            launcher_icon: parsed_config.package_meta.icon_resource,
-            name: parsed_config.package.name,
-            version: parsed_config.package_meta.version,
+            launcher_icon: parsed_config.build.icon_resource,
+            name: parsed_config.package.name_res,
+            version: parsed_config.build.version,
             min_sdk_version: parsed_config.package.min_sdk,
             products: CIQProducts {
                 product: ciq_products
