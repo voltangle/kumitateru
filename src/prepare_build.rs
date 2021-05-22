@@ -1,13 +1,16 @@
 use colored::Colorize;
 use std::fs;
 use std::path::PathBuf;
-use crate::utils::fs_recursive_copy::copy;
+use crate::utils::fs_recursive_copy::{recursive_copy, recursive_delete};
 use crate::utils::config::parse_config;
 
 /// This function gathers all files from resources and
 /// src directories, and transfers them in build/proj,
 /// where it will be built by monkeyc.
 pub fn construct_connectiq_project(manifest: String) {
+    if PathBuf::from("build").exists() {
+        recursive_delete("build");
+    }
     let _ = fs::create_dir("build");
     let _ = fs::create_dir("build/tmp");
     let _ = fs::create_dir("build/tmp/source");
@@ -21,7 +24,7 @@ pub fn construct_connectiq_project(manifest: String) {
     let _ = fs::File::create(PathBuf::from("build/tmp/monkey.jungle"));
     let _ = fs::write(PathBuf::from("build/tmp/monkey.jungle"), r#"project.manifest = manifest.xml"#);
 
-    let _ = copy(PathBuf::from("src"), PathBuf::from("build/tmp/source"));
+    let _ = recursive_copy(PathBuf::from("src"), PathBuf::from("build/tmp/source"));
     println!("{}", "Preparing resources...".bold());
     let mut device_specific_res: Vec<String> = Vec::new();
 
@@ -60,7 +63,7 @@ pub fn construct_connectiq_project(manifest: String) {
             let mut start_directory = PathBuf::from("resources/strings");
             start_directory.push("main");
 
-            copy(start_directory, end_dir);
+            recursive_copy(start_directory, end_dir);
         } else {
             let mut end_dir = PathBuf::from("build/tmp");
             let mut end_dirname: String = "resources-".parse().unwrap();
@@ -71,7 +74,7 @@ pub fn construct_connectiq_project(manifest: String) {
             let mut start_directory = PathBuf::from("resources/strings");
             start_directory.push(language);
 
-            copy(start_directory, end_dir);
+            recursive_copy(start_directory, end_dir);
         }
     }
 
@@ -114,7 +117,7 @@ fn transfer_device_resources(resource: String, device_specific_res: Vec<String>)
             end_dir.push(end_dirname);
             end_dir.push(&resource);
 
-            copy(res_dir, &end_dir);
+            recursive_copy(res_dir, &end_dir);
         }
     }
 
