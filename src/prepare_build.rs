@@ -78,6 +78,26 @@ pub fn construct_connectiq_project(manifest: String) {
     // And here we will transfer other resources
     for resource in vec!["drawables", "layouts", "fonts", "menus", "settings"] {
         transfer_device_resources(resource.to_string(), device_specific_res.clone());
+        let mut dir = PathBuf::from("build/tmp/resources");
+        dir.push(resource);
+        fs::create_dir(&dir);
+        tranfer_main_resources(resource.to_string());
+    }
+}
+
+fn tranfer_main_resources(resource: String) {
+    let mut search_path = PathBuf::from("resources");
+    search_path.push(&resource);
+    for entry in fs::read_dir(search_path).unwrap() {
+        let entry = entry.unwrap();
+        if entry.file_type().unwrap().is_file() {
+            let mut end_dir = PathBuf::from("build/tmp");
+            end_dir.push("resources");
+            end_dir.push(&resource);
+            end_dir.push(entry.file_name());
+
+            fs::copy(entry.path(), end_dir);
+        }
     }
 }
 
