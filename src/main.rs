@@ -1,14 +1,16 @@
 mod prepare_build;
 mod utils;
 mod verify_project;
+pub mod compile_project;
 
 use colored::Colorize;
 use std::fs;
 use crate::verify_project::verify_project;
 use crate::prepare_build::construct_connectiq_project;
 use crate::utils::manifest_utils::generate_ciq_manifest;
+use crate::compile_project::compile_project;
 use clap::{Arg, SubCommand, App};
-
+use std::path::PathBuf;
 
 fn main() {
     let matches = App::new("Kumitateru")
@@ -34,6 +36,9 @@ fn main() {
                     construct_connectiq_project(
                         generate_ciq_manifest(fs::read_to_string("kumitateru.toml").unwrap())
                     );
+                    println!("{}", "Successfully assembled!".bold().bright_green());
+                    println!("{} {}", "Step 3:".bold().bright_green(), "Compile the app");
+                    compile_project(PathBuf::from("build/tmp"), PathBuf::from("build/output"));
                 }
                 &_ => {}
             }
