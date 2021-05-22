@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{PathBuf, Path};
 
 // Big thanks to https://stackoverflow.com/a/60406693
-pub fn copy<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> Result<(), std::io::Error> {
+pub fn recursive_copy<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> Result<(), std::io::Error> {
     let mut stack = Vec::new();
     stack.push(PathBuf::from(from.as_ref()));
 
@@ -33,6 +33,36 @@ pub fn copy<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> Result<(), std::i
                     Some(filename) => {
                         let dest_path = dest.join(filename);
                         fs::copy(&path, &dest_path)?;
+                    }
+                    None => {
+                        eprintln!("failed: {:?}", path);
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
+}
+
+pub fn recursive_delete<U: AsRef<Path>>(dir: U) -> Result<(), std::io::Error> {
+    let mut stack = Vec::new();
+    stack.push(PathBuf::from(dir.as_ref()));
+
+    while let Some(working_path) = stack.pop() {
+        for entry in fs::read_dir(working_path)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.is_dir() {
+                stack.push(path);
+            } else {
+                match path.file_name() {
+                    Some(_) => {
+                        if path.is_file() {
+                            fs::remove_file(&path)?;
+                        } else {
+                            fs::remove_dir(&path)?;
+                        }
                     }
                     None => {
                         eprintln!("failed: {:?}", path);
