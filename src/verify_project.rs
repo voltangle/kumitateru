@@ -58,7 +58,11 @@ pub fn verify_project() {
                 match entry.file_name().into_string() {
                     Ok(entry) => {
                         if entry != ".DS_Store" {
-                            available_resources.push(entry);
+                            if entry == "main" {
+                                available_resources.push("eng".parse().unwrap());
+                            } else {
+                                available_resources.push(entry);
+                            }
                         }
                     }
                     Err(_) => {
@@ -73,7 +77,10 @@ pub fn verify_project() {
             }
         }
     }
-    if do_vectors_match(parsed_config.clone().package_meta.languages, available_resources) {} else {
+    available_resources.sort();
+    let mut config_languages = parsed_config.clone().package_meta.languages;
+    config_languages.sort();
+    if !do_vectors_match(config_languages, available_resources) {
         eprintln!("{}", "Language resources don't match up. Please remove unused languages from manifest.xml.".bright_red().bold());
         std::process::exit(1);
     }
