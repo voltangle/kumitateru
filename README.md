@@ -4,7 +4,29 @@ Kumitateru is a build system for Garmin ConnectIQ, written in Rust.
 
 Currently in development, so you can't use it.
 
-## Setup build config
+## Project structure
+
+The basic directory structure looks like this:
+```
+├── id_rsa_garmin.der
+├── kumitateru
+├── kumitateru.toml
+├── resources
+│   ├── drawables
+│   │   ├── drawables.xml
+│   │   └── launcher_icon.png
+│   ├── fonts
+│   │   └── fenix5
+│   ├── layouts
+│   ├── menus
+│   ├── settings
+│   └── strings
+│       └── main
+│           └── strings.xml
+└── src
+```
+
+## Build config
 Build config sits in the root of the project, and named `kumitateru.toml`. It looks like this:
 
 ```toml
