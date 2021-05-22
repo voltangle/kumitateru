@@ -21,7 +21,14 @@ fn main() {
             .value_name("version")
             .help("Get version")
             .takes_value(false))
-        .subcommand(SubCommand::with_name("build"))
+        .subcommand(SubCommand::with_name("build")
+            .arg(Arg::with_name("target")
+                .long("target")
+                .value_name("TARGET")
+                .help("Specifies custom target.")
+                .default_value("package")
+                .takes_value(true))
+        )
         .get_matches();
 
 
@@ -30,6 +37,7 @@ fn main() {
             match name {
                 "build" => {
                     println!("Building project...");
+                    println!("{}", matches.subcommand_matches("build").unwrap().value_of("target").unwrap());
                     println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure");
                     verify_project();
                     println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project");
@@ -38,7 +46,10 @@ fn main() {
                     );
                     println!("{}", "Successfully assembled!".bold().bright_green());
                     println!("{} {}", "Step 3:".bold().bright_green(), "Compile the app");
-                    compile_project(PathBuf::from("build/tmp"), PathBuf::from("build/output"));
+                    compile_project(
+                        PathBuf::from("build/tmp"),
+                        PathBuf::from("build/output"),
+                        matches.subcommand_matches("build").unwrap().value_of("target").unwrap());
                 }
                 &_ => {}
             }
