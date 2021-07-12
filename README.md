@@ -4,6 +4,13 @@ Kumitateru is a build system for Garmin ConnectIQ, written in Rust.
 
 It is ALPHA software, be aware
 
+## Currently in development
+Currently, I am making code analyser for kumitateru, for you to check syntax
+faster and analyse your code and spot bugs before they end up in the store.
+
+One more feature is SDK management. It would allow you to download
+the SDK and device files through kumitateru, and set it up there.
+
 ## Project structure
 
 The basic directory structure looks like this:

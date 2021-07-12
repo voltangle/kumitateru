@@ -8,8 +8,8 @@ use crate::utils::config::parse_config;
 /// src directories, and transfers them in build/proj,
 /// where it will be built by monkeyc.
 pub fn construct_connectiq_project(manifest: String) {
-    if PathBuf::from("build").exists() {
-        recursive_delete("build");
+    if PathBuf::from("build/tmp").exists() {
+        recursive_delete("build/tmp");
     }
     let _ = fs::create_dir("build");
     let _ = fs::create_dir("build/tmp");

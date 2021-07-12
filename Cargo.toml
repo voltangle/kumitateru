@@ -1,6 +1,6 @@
 [package]
 name = "kumitateru"
-version = "1.0.0"
+version = "1.1.0"
 authors = ["ggoraa <ggoraa1029@gmail.com>"]
 edition = "2018"
 
