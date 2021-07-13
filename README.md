@@ -6,9 +6,10 @@ It is ALPHA software, be aware
 
 ## Currently in development
 Currently, I am making code analyser for kumitateru, for you to check syntax
-faster and analyse your code and spot bugs before they end up in the store.
+faster and analyse your code and spot bugs before they end up in the store,
+but I have barrel and multi-module project support higher in my priority list
 
-One more feature is SDK management. It would allow you to download
+One more feature I want to implement is SDK management. It would allow you to download
 the SDK and device files through kumitateru, and set it up there.
 
 ## Project structure
