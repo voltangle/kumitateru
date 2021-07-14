@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 use std::process::Command;
-use crate::utils::config::parse_config;
+use crate::utils::parse_config::parse_config;
 use std::fs;
 
 pub fn compile_project(project: PathBuf, output: PathBuf, target: &str) {
