@@ -2,7 +2,7 @@ use colored::Colorize;
 use std::fs;
 use std::path::PathBuf;
 use crate::utils::fs_recursive_copy::{recursive_copy, recursive_delete};
-use crate::utils::config::parse_config;
+use crate::utils::parse_config::parse_config;
 
 /// This function gathers all files from resources and
 /// src directories, and transfers them in build/proj,

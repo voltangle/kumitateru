@@ -4,7 +4,7 @@ use colored::Colorize;
 use std::path::PathBuf;
 use crate::utils::do_vectors_match::do_vectors_match;
 use std::borrow::Cow;
-use crate::utils::config::parse_config;
+use crate::utils::parse_config::parse_config;
 
 pub fn verify_project() {
     let mut resources_location: PathBuf;
