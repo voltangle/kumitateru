@@ -1,6 +1,6 @@
-use crate::utils::config::AppConfig;
 use yaserde_derive::YaSerialize;
 use yaserde::ser::to_string;
+use ser_de::config::app_config::AppConfig;
 
 pub fn generate_ciq_manifest(toml_config: String) -> String {
     let parsed_config: AppConfig = toml::from_str(&*toml_config).unwrap();
