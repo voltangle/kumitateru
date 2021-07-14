@@ -33,11 +33,7 @@ pub struct AppConfigPackageMeta {
 #[derive(Clone)]
 pub struct AppConfigBuild {
     pub signing_key: String,
-    pub enable_code_analysing: bool,
+    pub enable_code_analysis_on_build: bool,
     pub connect_iq_version: String,
     pub compiler_args: String,
-}
-
-pub fn parse_config(config: String) -> AppConfig {
-    return toml::from_str::<AppConfig>(&*config).unwrap();
 }
