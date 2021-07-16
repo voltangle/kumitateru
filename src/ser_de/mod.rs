@@ -1,2 +1,3 @@
 pub mod config;
-mod manifest;
+pub mod manifest;
+pub mod parse_config;
