@@ -1,6 +1,6 @@
 use yaserde_derive::YaSerialize;
 use yaserde::ser::to_string;
-use ser_de::config::app_config::AppConfig;
+use crate::ser_de::config::app_config::AppConfig;
 
 pub fn generate_ciq_manifest(toml_config: String) -> String {
     let parsed_config: AppConfig = toml::from_str(&*toml_config).unwrap();
@@ -8,6 +8,7 @@ pub fn generate_ciq_manifest(toml_config: String) -> String {
     let mut ciq_products: Vec<CIQProduct> = Vec::new();
     let mut ciq_permissions: Vec<CIQPermission> = Vec::new();
     let mut ciq_languages: Vec<String> = Vec::new();
+    let mut ciq_dependencies: Vec<CIQDependency> = Vec::new();
 
     for entry in parsed_config.package_meta.devices {
         ciq_products.push(CIQProduct{ id: entry })
@@ -17,6 +18,12 @@ pub fn generate_ciq_manifest(toml_config: String) -> String {
     }
     for entry in parsed_config.package_meta.languages {
         ciq_languages.push(entry)
+    }
+    for (entry, value) in parsed_config.dependencies {
+        ciq_dependencies.push(CIQDependency {
+            name: entry,
+            version: value.to_string()
+        })
     }
 
     let manifest_struct = CIQManifest {
@@ -36,7 +43,10 @@ pub fn generate_ciq_manifest(toml_config: String) -> String {
             permissions: CIQPermissions {
                 uses_permission: ciq_permissions
             },
-            languages: CIQLanguages { language: ciq_languages }
+            languages: CIQLanguages { language: ciq_languages },
+            barrels: CIQDependencies {
+                depends: ciq_dependencies
+            }
         }
     };
     let mut serialized_manifest = to_string(&manifest_struct).unwrap();
@@ -57,7 +67,10 @@ pub fn generate_ciq_manifest(toml_config: String) -> String {
         .replace("<languages", "<iq:languages")
         .replace("</languages", "</iq:languages")
         .replace("<language", "<iq:language")
-        .replace("</language", "</iq:language");
+        .replace("</language", "</iq:language")
+        .replace("<barrels", "<iq:barrels")
+        .replace("</barrels", "</iq:barrels")
+        .replace("<depends", "<iq:depends");
     return serialized_manifest
 }
 
@@ -95,6 +108,7 @@ struct CIQApplication {
     products: CIQProducts,
     permissions: CIQPermissions,
     languages: CIQLanguages,
+    barrels: CIQDependencies,
 }
 
 #[derive(Default, PartialEq, Debug, YaSerialize)]
@@ -126,4 +140,15 @@ struct CIQPermission {
 struct CIQLanguages {
     #[yaserde(child)]
     language: Vec<String>
+}
+
+#[derive(Default, PartialEq, Debug, YaSerialize)]
+struct CIQDependencies {
+    depends: Vec<CIQDependency>
+}
+
+#[derive(Default, PartialEq, Debug, YaSerialize)]
+struct CIQDependency {
+    name: String,
+    version: String
 }
