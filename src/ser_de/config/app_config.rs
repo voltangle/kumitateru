@@ -1,4 +1,5 @@
 use serde::Deserialize;
+use toml::value::Table;
 
 #[derive(Deserialize)]
 #[derive(Clone)]
@@ -6,6 +7,7 @@ pub struct AppConfig {
     pub package: AppConfigPackage,
     pub package_meta: AppConfigPackageMeta,
     pub build: AppConfigBuild,
+    pub dependencies: Table,
 }
 
 #[derive(Deserialize)]
