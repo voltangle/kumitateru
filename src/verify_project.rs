@@ -4,9 +4,9 @@ use colored::Colorize;
 use std::path::PathBuf;
 use crate::utils::do_vectors_match::do_vectors_match;
 use std::borrow::Cow;
-use crate::utils::parse_config::parse_config;
+use crate::ser_de::parse_config::parse_config;
 
-pub fn verify_project() {
+pub fn verify_app_project() {
     let mut resources_location: PathBuf;
     match std::env::current_dir() {
         Ok(dir) => {

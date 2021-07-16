@@ -1,9 +1,9 @@
 use std::path::PathBuf;
 use std::process::Command;
-use crate::utils::parse_config::parse_config;
+use crate::ser_de::parse_config::parse_config;
 use std::fs;
 
-pub fn compile_project(project: PathBuf, output: PathBuf, target: &str) {
+pub fn compile_app_project(project: PathBuf, output: PathBuf, target: &str) {
     let mut jungle_path = project;
     jungle_path.push("monkey.jungle");
     let mut output_path = output;
