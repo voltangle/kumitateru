@@ -22,7 +22,7 @@ pub fn generate_ciq_manifest(toml_config: String) -> String {
     for (entry, value) in parsed_config.dependencies {
         ciq_dependencies.push(CIQDependency {
             name: entry,
-            version: value.to_string()
+            version: value[0].as_str().unwrap().to_string()
         })
     }
 
@@ -149,6 +149,8 @@ struct CIQDependencies {
 
 #[derive(Default, PartialEq, Debug, YaSerialize)]
 struct CIQDependency {
+    #[yaserde(attribute)]
     name: String,
+    #[yaserde(attribute)]
     version: String
 }

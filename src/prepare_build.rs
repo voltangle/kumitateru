@@ -86,9 +86,11 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
     }
 
     // At last we transfer dependencies...
+    fs::create_dir(PathBuf::from("build/tmp/dependencies/"));
     for (_, value) in dependencies.clone() {
-        let output = PathBuf::from(format!("{}{}","build/tmp/dependencies/", value.as_str().unwrap()));
-        fs::copy(value.as_str().unwrap(), output);
+        let output = PathBuf::from(format!("{}{}","build/tmp/dependencies/", value[1].as_str().unwrap()));
+        println!("{:?}", output);
+        fs::copy(format!("{}/{}", "dependencies", value[1].as_str().unwrap()), output);
     }
 
     // ...and generate monkey.jungle with all needed data
@@ -96,9 +98,10 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
     let mut monkey_jungle_data = String::new();
     monkey_jungle_data.push_str("project.manifest = manifest.xml\n\n"); // First we will write the base line which specifies the manifest location
     for (entry, value) in dependencies {
-        monkey_jungle_data.push_str(&*format!("{} - [{}]\n", entry, format!("dependencies/{}", value)));
+        monkey_jungle_data.push_str(&*format!("{} = \"{}\"\n", entry, format!("dependencies/{}", value[1].as_str().unwrap())));
         monkey_jungle_data.push_str(&*format!("base.barrelPath = $(base.barrelPath);$({})\n", entry));
     }
+    fs::write(PathBuf::from("build/tmp/monkey.jungle"), monkey_jungle_data.clone());
     println!("{}", monkey_jungle_data);
 }
 
