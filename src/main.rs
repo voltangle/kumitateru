@@ -3,6 +3,7 @@ mod utils;
 mod verify_project;
 pub mod compile_project;
 mod ser_de;
+mod ciq_sdk;
 
 use colored::Colorize;
 use std::{fs, thread, time};
@@ -16,6 +17,7 @@ use ser_de::parse_config::parse_config;
 use serde::Deserialize;
 use crate::ser_de::manifest::manifest_utils::generate_ciq_manifest;
 use crate::ser_de::config::app_config::AppConfig;
+use crate::ciq_sdk::CIQSdk;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -65,6 +67,7 @@ fn main() {
                     let package_type = toml::from_str::<AppBarrelCheck>(&*fs::read_to_string("kumitateru.toml").unwrap()).unwrap().package.package_type;
                     if package_type == "app"  {
                         println!("Building the app...");
+                        let bin_loc = CIQSdk::bin_location(&*toml::from_str::<AppConfig>(&*fs::read_to_string("kumitateru.toml").unwrap()).unwrap().package.target_sdk);
                         println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure");
                         verify_app_project();
                         println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project");
@@ -77,13 +80,11 @@ fn main() {
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
-                            matches.subcommand_matches("build").unwrap().value_of("target").unwrap());
+                            matches.subcommand_matches("build").unwrap().value_of("target").unwrap(),
+                            bin_loc);
                         println!("{}", "Successfully built!".bold().bright_green());
                     } else if package_type == "lib" {
                         eprintln!("Kumitateru does not support building libraries(barrels) at the time. Please, replace project_type value with \"app\".");
-                        // println!("Building the library(barrel)...");
-                        // println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure");
-                        // verify_app_project();
                     } else {
                         eprintln!("Bad project type specified. Please, set it to \"app\" and leave it alone.");
                     }
@@ -91,6 +92,7 @@ fn main() {
                 "run" => {
                     if toml::from_str::<AppBarrelCheck>(&*fs::read_to_string("kumitateru.toml").unwrap()).unwrap().package.package_type == "app" {
                         println!("Running the app...");
+                        let bin_loc = CIQSdk::bin_location(&*toml::from_str::<AppConfig>(&*fs::read_to_string("kumitateru.toml").unwrap()).unwrap().package.target_sdk);
                         println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure");
                         verify_app_project();
                         println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project");
@@ -103,7 +105,8 @@ fn main() {
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
-                            matches.subcommand_matches("run").unwrap().value_of("target").unwrap());
+                            matches.subcommand_matches("run").unwrap().value_of("target").unwrap(),
+                            bin_loc);
                         println!("{} {}", "Step 4:".bold().bright_green(), "Run");
                         let _ = Command::new("connectiq").status().unwrap(); // start the simulator
                         thread::sleep(time::Duration::from_millis(2000));
