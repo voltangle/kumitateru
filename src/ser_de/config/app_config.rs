@@ -14,10 +14,16 @@ pub struct AppConfig {
 #[derive(Clone)]
 pub struct AppConfigPackage {
     pub icon_resource: String,
+    /// Name resource.
     pub name_res: String,
+    /// Main class, which will be called on start.
     pub main_class: String,
+    /// App type. For now
     pub app_type: String,
+    /// Minimum SDK, on which the app/library will run.
     pub min_sdk: String,
+    /// SDK which will be used to compile the project.
+    pub target_sdk: String,
 }
 
 #[derive(Deserialize)]
@@ -35,7 +41,7 @@ pub struct AppConfigPackageMeta {
 #[derive(Clone)]
 pub struct AppConfigBuild {
     pub signing_key: String,
-    pub enable_code_analysis_on_build: bool,
-    pub connect_iq_version: String,
+    pub code_analysis_on_build: bool,
+    pub type_check_level: i8,
     pub compiler_args: String,
 }
