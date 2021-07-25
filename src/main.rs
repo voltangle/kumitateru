@@ -6,7 +6,7 @@ mod ser_de;
 mod ciq_sdk;
 
 use colored::Colorize;
-use std::{fs, thread, time};
+use std::{fs, thread, time, process};
 use verify_project::verify_app_project;
 use prepare_build::construct_connectiq_app_project;
 use compile_project::compile_app_project;
@@ -85,8 +85,10 @@ fn main() {
                         println!("{}", "Successfully built!".bold().bright_green());
                     } else if package_type == "lib" {
                         eprintln!("Kumitateru does not support building libraries(barrels) at the time. Please, replace project_type value with \"app\".");
+                        process::exit(12); // Exit code 12 indicates that the project config was badly configured
                     } else {
                         eprintln!("Bad project type specified. Please, set it to \"app\" and leave it alone.");
+                        process::exit(12); // Exit code 12 indicates that the project config was badly configured
                     }
                 }
                 "run" => {
@@ -117,6 +119,8 @@ fn main() {
                             ]).status().unwrap();
                     } else {
                         eprintln!("{}{}{}{}{}", "Sorry, this project is not an app, it is a".bright_red(), "library".bold().bright_red(), "(barrel). You can't use".bright_red(), "run".bold().bright_red(), "with libraries!".bright_red());
+                        process::exit(12); // Exit code 12 indicates that the project config was badly configured
+
                     }
                 }
                 &_ => {}
