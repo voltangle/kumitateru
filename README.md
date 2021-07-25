@@ -18,7 +18,7 @@ The basic directory structure looks like this:
 ```
 ├── id_rsa_garmin.der
 ├── kumitateru
-├── kumitateru.toml
+├── package.toml
 ├── resources
 │   ├── drawables
 │   │   ├── drawables.xml
@@ -35,36 +35,37 @@ The basic directory structure looks like this:
 ```
 
 ## Build config
-Build config sits in the root of the project, and named `kumitateru.toml`. It looks like this:
+Build config sits in the root of the project, and named `package.toml`. It looks like this:
 
 ```toml
 [package]
-name = "MyApp"
 name_res = "@Strings.AppName"
-main_class = "MyAppMainClass"
+icon_resource = "@Drawables.LauncherIcon"
+main_class = "MyApp"
+# Currently here for the future, exactly for supporting libraries(barrels) as projects, not only apps.
+package_type = "app"
 app_type = "watch-app"
 min_sdk = "1.2.0"
+# This property is for setting the SDK, which will be used to build the app
+target_sdk = "4.0.4"
 
-[package-meta]
+[package_meta]
+name = "MyApp"
 id = "app-id"
-devices = [
-    "fenix6x"
-]
-permissions = [
-    "Communications"
-]
-languages = [
-    "eng"
-]
+version = "1.0.0"
+devices = ["fenix6xpro"]
+permissions = ["Background"]
+languages = ["eng"]
 
 [build]
-version = "1.0.0"
-icon_resource = "@Drawables.LauncherIcon"
 signing_key = "id_garmin_sign.der"
+# This will be, again, for future. Will be used for code analysis, like possible places of crash, bad design, and much more
+code_analysis_on_build = false
+type_check_level = 0 # Type checking, which was introduced in CIQ 4.0.0. Levels: 0: disable, 1: gradual, 2: informative, 3: strict
+compiler_args = "" # If you want some custom parameters, place them here
 
-# This block does not affect anything, it is just there for the future
 [dependencies]
-"simple-barrel" = "0.1.0"
+"simple-barrel" = ["0.1.0", "simple-barrel-0.1.0.barrel"] # The second entry is a path to the barrel inside of dependencies folder.
 ```
 
 For now Kumitateru does not support external dependencies(or barrels, as Garmin calls them),
