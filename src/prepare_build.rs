@@ -2,12 +2,13 @@ use colored::Colorize;
 use std::fs;
 use std::path::PathBuf;
 use crate::utils::fs_recursive_copy::{recursive_copy, recursive_delete};
-use crate::utils::config::parse_config;
+use crate::ser_de::parse_config::parse_config;
+use toml::value::Table;
 
 /// This function gathers all files from resources and
 /// src directories, and transfers them in build/proj,
 /// where it will be built by monkeyc.
-pub fn construct_connectiq_project(manifest: String) {
+pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
     if PathBuf::from("build/tmp").exists() {
         recursive_delete("build/tmp");
     }
@@ -20,9 +21,6 @@ pub fn construct_connectiq_project(manifest: String) {
 
     let _ = fs::File::create(PathBuf::from("build/tmp/manifest.xml"));
     let _ = fs::write(PathBuf::from("build/tmp/manifest.xml"), manifest);
-
-    let _ = fs::File::create(PathBuf::from("build/tmp/monkey.jungle"));
-    let _ = fs::write(PathBuf::from("build/tmp/monkey.jungle"), r#"project.manifest = manifest.xml"#);
 
     let _ = recursive_copy(PathBuf::from("src"), PathBuf::from("build/tmp/source"));
     println!("{}", "Preparing resources...".bold());
@@ -84,11 +82,28 @@ pub fn construct_connectiq_project(manifest: String) {
         let mut dir = PathBuf::from("build/tmp/resources");
         dir.push(resource);
         fs::create_dir(&dir);
-        tranfer_main_resources(resource.to_string());
+        transfer_main_resources(resource.to_string());
     }
+
+    // At last we transfer dependencies...
+    fs::create_dir(PathBuf::from("build/tmp/dependencies/"));
+    for (_, value) in dependencies.clone() {
+        let output = PathBuf::from(format!("{}{}","build/tmp/dependencies/", value[1].as_str().unwrap()));
+        fs::copy(format!("{}/{}", "dependencies", value[1].as_str().unwrap()), output);
+    }
+
+    // ...and generate monkey.jungle with all needed data
+    let _ = fs::File::create(PathBuf::from("build/tmp/monkey.jungle"));
+    let mut monkey_jungle_data = String::new();
+    monkey_jungle_data.push_str("project.manifest = manifest.xml\n\n"); // First we will write the base line which specifies the manifest location
+    for (entry, value) in dependencies {
+        monkey_jungle_data.push_str(&*format!("{} = \"{}\"\n", entry, format!("dependencies/{}", value[1].as_str().unwrap())));
+        monkey_jungle_data.push_str(&*format!("base.barrelPath = $(base.barrelPath);$({})\n", entry));
+    }
+    fs::write(PathBuf::from("build/tmp/monkey.jungle"), monkey_jungle_data);
 }
 
-fn tranfer_main_resources(resource: String) {
+fn transfer_main_resources(resource: String) {
     let mut search_path = PathBuf::from("resources");
     search_path.push(&resource);
     for entry in fs::read_dir(search_path).unwrap() {
