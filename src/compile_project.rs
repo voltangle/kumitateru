@@ -7,7 +7,7 @@ pub fn compile_app_project(project: PathBuf, output: PathBuf, target: &str, comp
     let mut jungle_path = project;
     jungle_path.push("monkey.jungle");
     let mut output_path = output;
-    let parsed_config = parse_config(fs::read_to_string("kumitateru.toml").unwrap());
+    let parsed_config = parse_config(fs::read_to_string("package.toml").unwrap());
 
     match target {
         "package" => {
