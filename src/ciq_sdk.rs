@@ -25,7 +25,7 @@ impl CIQSdk {
                     path.push("bin");
                     path
                 } else {
-                    eprintln!("Sorry, could not find any SDKs. Please download any!");
+                    if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Sorry, could not find any SDKs. Please download any!"); }
                     process::exit(24); // Error code 24 signifies that kumitateru was unable to find any SDKs because the CIQ folder did not exist or was empty.
                 }
             }
@@ -48,12 +48,12 @@ impl CIQSdk {
                     path.push("bin");
                     path
                 } else {
-                    eprintln!("Sorry, could not find any SDKs. Please download any!");
+                    if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Sorry, could not find any SDKs. Please download any!"); }
                     process::exit(24); // Error code 24 signifies that kumitateru was unable to find any SDKs because the CIQ folder did not exist or was empty.
                 }
             }
             &_ => {
-                eprintln!("Sorry, unsupported OS. Please, run this binary only on supported OS'es(macOS and Windows)");
+                if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Sorry, unsupported OS. Please, run this binary only on supported OS'es(macOS and Windows)"); }
                 process::exit(25); // Error code 25 signifies that kumitateru was unable to find any SDKs because the system is unsupported.
             }
         }

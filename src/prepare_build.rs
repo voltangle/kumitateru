@@ -1,5 +1,5 @@
 use colored::Colorize;
-use std::fs;
+use std::{fs, env};
 use std::path::PathBuf;
 use crate::utils::fs_recursive_copy::{recursive_copy, recursive_delete};
 use crate::ser_de::parse_config::parse_config;
@@ -17,13 +17,13 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
     let _ = fs::create_dir("build/tmp/source");
     let _ = fs::create_dir("build/tmp/resources");
 
-    println!("{}", "Copying source code...".bold());
+    if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Copying source code...".bold()); }
 
     let _ = fs::File::create(PathBuf::from("build/tmp/manifest.xml"));
     let _ = fs::write(PathBuf::from("build/tmp/manifest.xml"), manifest);
 
     let _ = recursive_copy(PathBuf::from("src"), PathBuf::from("build/tmp/source"));
-    println!("{}", "Preparing resources...".bold());
+    if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Preparing resources...".bold()); }
     let mut device_specific_res: Vec<String> = Vec::new();
 
     // Here we get all device-specific resources

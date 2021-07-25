@@ -18,6 +18,7 @@ use serde::Deserialize;
 use crate::ser_de::manifest::manifest_utils::generate_ciq_manifest;
 use crate::ser_de::config::app_config::AppConfig;
 use crate::ciq_sdk::CIQSdk;
+use std::intrinsics::prefetch_read_instruction;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -34,7 +35,7 @@ struct AppConfigPackage {
 
 fn main() {
     let matches = App::new("Kumitateru")
-        .version("0.2.0")
+        .version("0.3.0")
         .author("GGorAA <yegor_yakovenko@icloud.com>")
         .about("A build system for Garmin ConnectIQ.")
         .arg(Arg::with_name("version")
@@ -58,7 +59,6 @@ fn main() {
                 .takes_value(true))
         )
         .get_matches();
-
 
     match matches.subcommand_name() {
         Some(name) => {
@@ -93,32 +93,32 @@ fn main() {
                 }
                 "run" => {
                     if toml::from_str::<AppBarrelCheck>(&*fs::read_to_string("package.toml").unwrap()).unwrap().package.package_type == "app" {
-                        println!("Running the app...");
+                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Running the app..."); }
                         let bin_loc = CIQSdk::bin_location(&*toml::from_str::<AppConfig>(&*fs::read_to_string("package.toml").unwrap()).unwrap().package.target_sdk);
-                        println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure");
+                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure"); }
                         verify_app_project();
-                        println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project");
+                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project"); }
                         construct_connectiq_app_project(
                             generate_ciq_manifest(fs::read_to_string("package.toml").unwrap()),
                             toml::from_str::<AppConfig>(&*fs::read_to_string("package.toml").unwrap()).unwrap().dependencies
                         );
-                        println!("{}", "Successfully assembled!".bold().bright_green());
-                        println!("{} {}", "Step 3:".bold().bright_green(), "Compile the app");
+                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully assembled!".bold().bright_green()); }
+                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 3:".bold().bright_green(), "Compile the app"); }
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
                             matches.subcommand_matches("run").unwrap().value_of("target").unwrap(),
                             bin_loc);
-                        println!("{} {}", "Step 4:".bold().bright_green(), "Run");
+                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 4:".bold().bright_green(), "Run"); } else { println!("\n=== RUN LOGS ===\n"); }
                         let _ = Command::new("connectiq").status().unwrap(); // start the simulator
-                        thread::sleep(time::Duration::from_millis(2000)); // idk how to fix the race issue when monkeydo is unable to connect to the simulator because it has not started at the time othen that like this
+                        thread::sleep(time::Duration::from_millis(2000)); // idk how to fix the race issue when monkeydo is unable to connect to the simulator because it has not started at the time other that like this
                         let _ = Command::new("monkeydo")
                             .args(&[
                                 format!("{}{}.prg", "build/output/", parse_config(fs::read_to_string("package.toml").unwrap()).package_meta.name),
                                 matches.subcommand_matches("run").unwrap().value_of("target").unwrap().to_string()
                             ]).status().unwrap();
                     } else {
-                        eprintln!("{}{}{}{}{}", "Sorry, this project is not an app, it is a".bright_red(), "library".bold().bright_red(), "(barrel). You can't use".bright_red(), "run".bold().bright_red(), "with libraries!".bright_red());
+                        if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("{}{}{}{}{}", "Sorry, this project is not an app, it is a".bright_red(), "library".bold().bright_red(), "(barrel). You can't use".bright_red(), "run".bold().bright_red(), "with libraries!".bright_red()); }
                         process::exit(12); // Exit code 12 indicates that the project config has bad project type
                     }
                 }
