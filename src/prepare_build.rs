@@ -101,8 +101,7 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
         monkey_jungle_data.push_str(&*format!("{} = \"{}\"\n", entry, format!("dependencies/{}", value[1].as_str().unwrap())));
         monkey_jungle_data.push_str(&*format!("base.barrelPath = $(base.barrelPath);$({})\n", entry));
     }
-    fs::write(PathBuf::from("build/tmp/monkey.jungle"), monkey_jungle_data.clone());
-    println!("{}", monkey_jungle_data);
+    fs::write(PathBuf::from("build/tmp/monkey.jungle"), monkey_jungle_data);
 }
 
 fn transfer_main_resources(resource: String) {
