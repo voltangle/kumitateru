@@ -89,7 +89,6 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
     fs::create_dir(PathBuf::from("build/tmp/dependencies/"));
     for (_, value) in dependencies.clone() {
         let output = PathBuf::from(format!("{}{}","build/tmp/dependencies/", value[1].as_str().unwrap()));
-        println!("{:?}", output);
         fs::copy(format!("{}/{}", "dependencies", value[1].as_str().unwrap()), output);
     }
 
