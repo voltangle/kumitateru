@@ -1,4 +1,4 @@
-![](https://github.com/ggoraa/kumitateru/actions/workflows/rust.yml/badge.svg)
+![](https://github.com/ggoraa/kumitateru/actions/workflows/build.yaml/badge.svg)
 # Kumitateru
 Kumitateru is a build system for Garmin ConnectIQ, written in Rust.
 
