@@ -25,7 +25,7 @@ impl CIQSdk {
                     path.push("bin");
                     path
                 } else {
-                    eprintln("Sorry, could not find any SDKs. Please download any!");
+                    eprintln!("Sorry, could not find any SDKs. Please download any!");
                     process::exit(24); // Error code 24 signifies that kumitateru was unable to find any SDKs because the CIQ folder did not exist or was empty.
                 }
             }
@@ -48,7 +48,7 @@ impl CIQSdk {
                     path.push("bin");
                     path
                 } else {
-                    eprintln("Sorry, could not find any SDKs. Please download any!");
+                    eprintln!("Sorry, could not find any SDKs. Please download any!");
                     process::exit(24); // Error code 24 signifies that kumitateru was unable to find any SDKs because the CIQ folder did not exist or was empty.
                 }
             }
