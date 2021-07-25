@@ -1,5 +1,5 @@
 use std::fs::ReadDir;
-use std::fs;
+use std::{fs, env};
 use colored::Colorize;
 use std::path::PathBuf;
 use crate::utils::do_vectors_match::do_vectors_match;
@@ -14,7 +14,7 @@ pub fn verify_app_project() {
             resources_location.push("resources");
         }
         Err(_) => {
-            eprintln!("{}", "Failed to get current working directory. Exiting...".bright_red());
+            if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("{}", "Failed to get current working directory. Exiting...".bright_red()); }
             std::process::exit(1);
         }
     }
@@ -26,7 +26,7 @@ pub fn verify_app_project() {
             resources_strings_location.push("strings");
         }
         Err(_) => {
-            eprintln!("{}", "Failed to get current working directory. Exiting...".bright_red());
+            if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("{}", "Failed to get current working directory. Exiting...".bright_red()); }
             std::process::exit(1);
         }
     }
@@ -35,8 +35,8 @@ pub fn verify_app_project() {
     // First step: compare available string.xml files to available languages in manifest.xml
 
     // Get languages from the manifest
-    println!("{}", "Reading config...".bold());
-    let config_string = fs::read_to_string(PathBuf::from("kumitateru.toml")).expect("No kumitateru.toml was found");
+    if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Reading config...".bold()); }
+    let config_string = fs::read_to_string(PathBuf::from("package.toml")).expect("No package.toml was found");
     let parsed_config = parse_config(config_string.clone());
 
     let string_resource_directories: ReadDir;
@@ -45,7 +45,7 @@ pub fn verify_app_project() {
             string_resource_directories = dir;
         }
         Err(_) => {
-            eprintln!("{}", "Failed to get strings in string resources. Exiting...".bright_red());
+            if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("{}", "Failed to get strings in string resources. Exiting...".bright_red()); }
             std::process::exit(1);
         }
     }
@@ -66,13 +66,13 @@ pub fn verify_app_project() {
                         }
                     }
                     Err(_) => {
-                        eprintln!("{}", "Something had gone wrong while reading files. Exiting...".bright_red());
+                        if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("{}", "Something had gone wrong while reading files. Exiting...".bright_red()); }
                         std::process::exit(1);
                     }
                 }
             }
             Err(_) => {
-                eprintln!("{}", "Something had gone wrong while reading files. Exiting...".bright_red());
+                if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("{}", "Something had gone wrong while reading files. Exiting...".bright_red()); }
                 std::process::exit(1);
             }
         }
@@ -81,8 +81,8 @@ pub fn verify_app_project() {
     let mut config_languages = parsed_config.clone().package_meta.languages;
     config_languages.sort();
     if !do_vectors_match(config_languages, available_resources) {
-        eprintln!("{}", "Language resources don't match up. Please remove unused languages from manifest.xml.".bright_red().bold());
-        std::process::exit(1);
+        if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("{}", "Language resources don't match up. Please remove unused languages from package.toml.".bright_red().bold()); }
+        std::process::exit(10);
     }
     // Next step: check for device-specific resources, that reference not-supported devices(not declared in manifest)
     // Check device-specific resources
@@ -109,7 +109,7 @@ pub fn verify_app_project() {
         }
     }
 
-    println!("{}", "Successfully verified project structure!".bold().green())
+    if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully verified project structure!".bold().green()) }
 }
 
 fn basename(path: &str, sep: char) -> Cow<str> {
@@ -124,9 +124,9 @@ fn match_device_resources(manifest: Vec<String>, res: Vec<String>) {
     if res.len() > 0 {
         for res in res {
             if !manifest.contains(&res) {
-                eprintln!("{}", "Detected device-specific resource declarations for devices that \
+                if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("{}", "Detected device-specific resource declarations for devices that \
                 are not declared as supported in manifest. Please, \
-                remove these resources, or add missing device in manifest.".red().bold());
+                remove these resources, or add missing device in manifest.".red().bold()); }
                 std::process::exit(1);
             }
         }
