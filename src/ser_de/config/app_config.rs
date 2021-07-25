@@ -18,7 +18,7 @@ pub struct AppConfigPackage {
     pub name_res: String,
     /// Main class, which will be called on start.
     pub main_class: String,
-    /// App type. For now
+    /// App type.
     pub app_type: String,
     /// Minimum SDK, on which the app/library will run.
     pub min_sdk: String,
