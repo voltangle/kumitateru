@@ -18,6 +18,8 @@ use serde::Deserialize;
 use crate::ser_de::manifest::manifest_utils::generate_ciq_manifest;
 use crate::ser_de::config::app_config::AppConfig;
 use crate::ciq_sdk::CIQSdk;
+use anyhow::Context;
+use anyhow::Result;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -32,7 +34,7 @@ struct AppConfigPackage {
     package_type: String,
 }
 
-fn main() {
+fn main() -> Result<()> {
     let matches = App::new("Kumitateru")
         .version("0.3.0")
         .author("GGorAA <yegor_yakovenko@icloud.com>")
@@ -59,14 +61,17 @@ fn main() {
         )
         .get_matches();
 
+    let config_str = fs::read_to_string("package.toml").with_context(|| "Unable to read package.toml")?;
+    let config_struct = toml::from_str::<AppConfig>(&*config_str).with_context(|| "Unable to parse package.toml")?;
+    let package_type = toml::from_str::<AppBarrelCheck>(&*config_str).with_context(|| "Unable to parse package.toml")?.package.package_type;
+
     match matches.subcommand_name() {
         Some(name) => {
             match name {
                 "build" => {
-                    let package_type = toml::from_str::<AppBarrelCheck>(&*fs::read_to_string("package.toml").unwrap()).unwrap().package.package_type;
                     if package_type == "app"  {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Building the app..."); }
-                        let bin_loc = CIQSdk::bin_location(&*toml::from_str::<AppConfig>(&*fs::read_to_string("package.toml").unwrap()).unwrap().package.target_sdk);
+                        let bin_loc = CIQSdk::bin_location(&*config_struct.package.target_sdk);
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure"); }
                         verify_app_project();
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project"); }
@@ -79,7 +84,7 @@ fn main() {
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
-                            matches.subcommand_matches("build").unwrap().value_of("target").unwrap(),
+                            matches.subcommand_matches("build").with_context(|| "")?.value_of("target").unwrap(),
                             bin_loc);
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully built!".bold().bright_green()); }
                     } else if package_type == "lib" {
@@ -129,5 +134,6 @@ fn main() {
             println!("{}", matches.usage());
         }
     }
+    Ok(())
 }
 
