@@ -2,12 +2,13 @@ use std::path::PathBuf;
 use std::process::Command;
 use crate::ser_de::parse_config::parse_config;
 use std::{fs, process, env};
+use anyhow::{Result, Context};
 
-pub fn compile_app_project(project: PathBuf, output: PathBuf, target: &str, compiler: PathBuf) {
+pub fn compile_app_project(project: PathBuf, output: PathBuf, target: &str, compiler: PathBuf) -> Result<()> {
     let mut jungle_path = project;
     jungle_path.push("monkey.jungle");
     let mut output_path = output;
-    let parsed_config = parse_config(fs::read_to_string("package.toml").unwrap());
+    let parsed_config = parse_config(fs::read_to_string("package.toml").with_context(|| "Unable to read package.toml")?);
 
     match target {
         "package" => {
@@ -83,6 +84,7 @@ pub fn compile_app_project(project: PathBuf, output: PathBuf, target: &str, comp
             }
         }
     }
+    Ok(())
 }
 
 // java -jar monkeybrains.jar -o wl.prg -f /monkey.jungle -y /id_rsa_garmin.der -l 1
