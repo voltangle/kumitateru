@@ -18,7 +18,6 @@ use serde::Deserialize;
 use crate::ser_de::manifest::manifest_utils::generate_ciq_manifest;
 use crate::ser_de::config::app_config::AppConfig;
 use crate::ciq_sdk::CIQSdk;
-use std::intrinsics::prefetch_read_instruction;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -109,7 +108,8 @@ fn main() {
                             PathBuf::from("build/output"),
                             matches.subcommand_matches("run").unwrap().value_of("target").unwrap(),
                             bin_loc);
-                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 4:".bold().bright_green(), "Run"); } else { println!("\n=== RUN LOGS ===\n"); }
+                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 4:".bold().bright_green(), "Run"); }
+                        if env::var("KMTR_IDE_SILENT").is_ok() { println!("\n=== RUN LOGS ===\n"); }
                         let _ = Command::new("connectiq").status().unwrap(); // start the simulator
                         thread::sleep(time::Duration::from_millis(2000)); // idk how to fix the race issue when monkeydo is unable to connect to the simulator because it has not started at the time other that like this
                         let _ = Command::new("monkeydo")
