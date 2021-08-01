@@ -13,7 +13,6 @@ use compile_project::compile_app_project;
 use clap::{Arg, SubCommand, App};
 use std::path::PathBuf;
 use std::process::Command;
-use ser_de::parse_config::parse_config;
 use serde::Deserialize;
 use crate::ser_de::manifest::manifest_utils::generate_ciq_manifest;
 use crate::ser_de::config::app_config::AppConfig;
