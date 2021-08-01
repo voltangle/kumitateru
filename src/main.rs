@@ -76,15 +76,15 @@ fn main() -> Result<()> {
                         verify_app_project();
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project"); }
                         construct_connectiq_app_project(
-                            generate_ciq_manifest(fs::read_to_string("package.toml").unwrap()),
-                            toml::from_str::<AppConfig>(&*fs::read_to_string("package.toml").unwrap()).unwrap().dependencies
+                            generate_ciq_manifest(config_struct.clone()).with_context(|| "Unable to generate manifest.xml")?,
+                            config_struct.clone().dependencies
                         );
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully assembled!".bold().bright_green()); }
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 3:".bold().bright_green(), "Compile the app"); }
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
-                            matches.subcommand_matches("build").with_context(|| "")?.value_of("target").unwrap(),
+                            matches.subcommand_matches("build").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
                             bin_loc);
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully built!".bold().bright_green()); }
                     } else if package_type == "lib" {
@@ -96,34 +96,36 @@ fn main() -> Result<()> {
                     }
                 }
                 "run" => {
-                    if toml::from_str::<AppBarrelCheck>(&*fs::read_to_string("package.toml").unwrap()).unwrap().package.package_type == "app" {
+                    if package_type == "app" {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Running the app..."); }
-                        let bin_loc = CIQSdk::bin_location(&*toml::from_str::<AppConfig>(&*fs::read_to_string("package.toml").unwrap()).unwrap().package.target_sdk);
+                        let bin_loc = CIQSdk::bin_location(&*config_struct.package.target_sdk);
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure"); }
                         verify_app_project();
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project"); }
                         construct_connectiq_app_project(
-                            generate_ciq_manifest(fs::read_to_string("package.toml").unwrap()),
-                            toml::from_str::<AppConfig>(&*fs::read_to_string("package.toml").unwrap()).unwrap().dependencies
+                            generate_ciq_manifest(config_struct.clone()).with_context(|| "Unable to generate manifest.xml")?,
+                            config_struct.clone().dependencies
                         );
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully assembled!".bold().bright_green()); }
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 3:".bold().bright_green(), "Compile the app"); }
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
-                            matches.subcommand_matches("run").unwrap().value_of("target").unwrap(),
+                            matches.subcommand_matches("run").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
                             bin_loc);
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 4:".bold().bright_green(), "Run"); }
                         if env::var("KMTR_IDE_SILENT").is_ok() { println!("\n=== RUN LOGS ===\n"); }
-                        let _ = Command::new("connectiq").status().unwrap(); // start the simulator
+                        let _ = Command::new("connectiq").status()?; // start the simulator
                         thread::sleep(time::Duration::from_millis(2000)); // idk how to fix the race issue when monkeydo is unable to connect to the simulator because it has not started at the time other that like this
                         let _ = Command::new("monkeydo")
                             .args(&[
-                                format!("{}{}.prg", "build/output/", parse_config(fs::read_to_string("package.toml").unwrap()).package_meta.name),
+                                format!("{}{}.prg", "build/output/", config_struct.clone().package_meta.name),
                                 matches.subcommand_matches("run").unwrap().value_of("target").unwrap().to_string()
-                            ]).status().unwrap();
+                            ]).status()?;
                     } else {
-                        if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("{}{}{}{}{}", "Sorry, this project is not an app, it is a".bright_red(), "library".bold().bright_red(), "(barrel). You can't use".bright_red(), "run".bold().bright_red(), "with libraries!".bright_red()); }
+                        if !env::var("KMTR_IDE_SILENT").is_ok() {
+                            eprintln!("{}{}{}{}{}", "Sorry, this project is not an app, it is a".bright_red(), "library".bold().bright_red(), "(barrel). You can't use".bright_red(), "run".bold().bright_red(), "with libraries!".bright_red());
+                        }
                         process::exit(12); // Exit code 12 indicates that the project config has bad project type
                     }
                 }
