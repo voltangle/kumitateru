@@ -3,7 +3,6 @@ use toml::value::Table;
 
 #[derive(Deserialize)]
 #[derive(Clone)]
-#[derive(Copy)]
 pub struct AppConfig {
     pub package: AppConfigPackage,
     pub package_meta: AppConfigPackageMeta,
@@ -13,7 +12,6 @@ pub struct AppConfig {
 
 #[derive(Deserialize)]
 #[derive(Clone)]
-#[derive(Copy)]
 pub struct AppConfigPackage {
     pub icon_resource: String,
     /// Name resource.
@@ -30,7 +28,6 @@ pub struct AppConfigPackage {
 
 #[derive(Deserialize)]
 #[derive(Clone)]
-#[derive(Copy)]
 pub struct AppConfigPackageMeta {
     pub name: String,
     pub id: String,
@@ -42,7 +39,6 @@ pub struct AppConfigPackageMeta {
 
 #[derive(Deserialize)]
 #[derive(Clone)]
-#[derive(Copy)]
 pub struct AppConfigBuild {
     pub signing_key: String,
     pub code_analysis_on_build: bool,
