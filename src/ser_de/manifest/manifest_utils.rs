@@ -48,7 +48,7 @@ pub fn generate_ciq_manifest(config: AppConfig) -> Result<String> {
             }
         }
     };
-    let mut serialized_manifest = to_string(&manifest_struct)?;
+    let mut serialized_manifest = to_string(&manifest_struct).unwrap();
 
     // And then a series of string replaces for adding iq namespace
     serialized_manifest = serialized_manifest
