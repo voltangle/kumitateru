@@ -1,8 +1,9 @@
 use std::fs;
 use std::path::{PathBuf, Path};
+use anyhow::Result;
 
 // Big thanks to https://stackoverflow.com/a/60406693
-pub fn recursive_copy<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> Result<(), std::io::Error> {
+pub fn recursive_copy<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> Result<()> {
     let mut stack = Vec::new();
     stack.push(PathBuf::from(from.as_ref()));
 
@@ -45,7 +46,7 @@ pub fn recursive_copy<U: AsRef<Path>, V: AsRef<Path>>(from: U, to: V) -> Result<
     Ok(())
 }
 
-pub fn recursive_delete<U: AsRef<Path>>(dir: U) -> Result<(), std::io::Error> {
+pub fn recursive_delete<U: AsRef<Path>>(dir: U) -> Result<()> {
     let mut stack = Vec::new();
     stack.push(PathBuf::from(dir.as_ref()));
 
