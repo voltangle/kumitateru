@@ -5,8 +5,9 @@ use std::path::PathBuf;
 use crate::utils::do_vectors_match::do_vectors_match;
 use std::borrow::Cow;
 use crate::ser_de::parse_config::parse_config;
+use anyhow::Result;
 
-pub fn verify_app_project() {
+pub fn verify_app_project() -> Result<()> {
     let mut resources_location: PathBuf;
     match std::env::current_dir() {
         Ok(dir) => {
@@ -59,7 +60,7 @@ pub fn verify_app_project() {
                     Ok(entry) => {
                         if entry != ".DS_Store" {
                             if entry == "main" {
-                                available_resources.push("eng".parse().unwrap());
+                                available_resources.push("eng".parse()?);
                             } else {
                                 available_resources.push(entry);
                             }
@@ -88,7 +89,7 @@ pub fn verify_app_project() {
     // Check device-specific resources
     for entry in fs::read_dir("resources") {
         for entry in entry {
-            let entry = entry.unwrap();
+            let entry = entry?;
 
             // This is needed to skip strings, because they contain folders with translated strings, instead of device-specific ones.
             if entry.path() == PathBuf::from("resources/strings") {
@@ -98,8 +99,8 @@ pub fn verify_app_project() {
 
             for entry in fs::read_dir(entry.path()) {
                 for entry in entry {
-                    let entry = entry.unwrap();
-                    if entry.file_type().unwrap().is_dir() {
+                    let entry = entry?;
+                    if entry.file_type()?.is_dir() {
                         let entry_string = entry.file_name().into_string().unwrap();
                         resources.push(basename(&*entry_string, '/').to_string());
                     }
@@ -110,6 +111,7 @@ pub fn verify_app_project() {
     }
 
     if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully verified project structure!".bold().green()) }
+    Ok(())
 }
 
 fn basename(path: &str, sep: char) -> Cow<str> {
