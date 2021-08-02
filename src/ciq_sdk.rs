@@ -5,7 +5,7 @@ use anyhow::{Result, Context};
 pub struct CIQSdk {}
 
 impl CIQSdk {
-    pub fn bin_location(sdk_version: &str) ->  PathBuf {
+    pub fn bin_location(sdk_version: &str) -> Result<PathBuf> {
         return match env::consts::OS {
             "macos" => {
                 // Searching for SDKs
@@ -13,8 +13,8 @@ impl CIQSdk {
                 let mut sdk_paths: Vec<PathBuf> = Vec::new();
                 let home_dir = home::home_dir().unwrap();
                 let sdk_dir_path = PathBuf::from(format!("{}{}", home_dir.to_str().unwrap(), "/Library/Application Support/Garmin/ConnectIQ/Sdks/"));
-                for path in fs::read_dir(sdk_dir_path).with_context(|| "Unable to read SDK directory contents")? {
-                    let path = path?;
+                for path in fs::read_dir(sdk_dir_path).with_context(|| "Unable to read SDK directory contents").unwrap() {
+                    let path = path.unwrap();
                     sdk_paths.push(path.path());
                     let path = path.file_name().to_str().unwrap().to_string();
                     let sdk_version = &path[18..23];
@@ -24,7 +24,7 @@ impl CIQSdk {
                     let pos = sdk_versions.clone().iter().position(|r| r == sdk_version).unwrap();
                     let mut path = (&*sdk_paths[pos]).to_path_buf();
                     path.push("bin");
-                    path
+                    Ok(path)
                 } else {
                     if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Sorry, could not find any SDKs. Please download any!"); }
                     process::exit(24); // Error code 24 signifies that kumitateru was unable to find any SDKs because the CIQ folder did not exist or was empty.
@@ -36,7 +36,7 @@ impl CIQSdk {
                 let mut sdk_paths: Vec<PathBuf> = Vec::new();
                 let home_dir = home::home_dir().unwrap();
                 let sdk_dir_path = PathBuf::from(format!("{}{}", home_dir.to_str().unwrap(), "\\AppData\\Roaming\\Garmin\\ConnectIQ\\Sdks"));
-                for path in fs::read_dir(sdk_dir_path).with_context(|| "Unable to read SDK directory contents")? {
+                for path in fs::read_dir(sdk_dir_path).with_context(|| "Unable to read SDK directory contents").unwrap() {
                     let path = path.unwrap();
                     sdk_paths.push(path.path());
                     let path = path.file_name().to_str().unwrap().to_string();
@@ -47,7 +47,7 @@ impl CIQSdk {
                     let pos = sdk_versions.clone().iter().position(|r| r == sdk_version).unwrap();
                     let mut path = (&*sdk_paths[pos]).to_path_buf();
                     path.push("bin");
-                    path
+                    Ok(path)
                 } else {
                     if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Sorry, could not find any SDKs. Please download any!"); }
                     process::exit(24); // Error code 24 signifies that kumitateru was unable to find any SDKs because the CIQ folder did not exist or was empty.
