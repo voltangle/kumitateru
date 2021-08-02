@@ -1,10 +1,11 @@
 use std::{env, fs, process};
 use std::path::PathBuf;
+use anyhow::{Result, Context};
 
 pub struct CIQSdk {}
 
 impl CIQSdk {
-    pub fn bin_location(sdk_version: &str) -> PathBuf {
+    pub fn bin_location(sdk_version: &str) ->  PathBuf {
         return match env::consts::OS {
             "macos" => {
                 // Searching for SDKs
@@ -12,8 +13,8 @@ impl CIQSdk {
                 let mut sdk_paths: Vec<PathBuf> = Vec::new();
                 let home_dir = home::home_dir().unwrap();
                 let sdk_dir_path = PathBuf::from(format!("{}{}", home_dir.to_str().unwrap(), "/Library/Application Support/Garmin/ConnectIQ/Sdks/"));
-                for path in fs::read_dir(sdk_dir_path).unwrap() {
-                    let path = path.unwrap();
+                for path in fs::read_dir(sdk_dir_path).with_context(|| "Unable to read SDK directory contents")? {
+                    let path = path?;
                     sdk_paths.push(path.path());
                     let path = path.file_name().to_str().unwrap().to_string();
                     let sdk_version = &path[18..23];
@@ -35,7 +36,7 @@ impl CIQSdk {
                 let mut sdk_paths: Vec<PathBuf> = Vec::new();
                 let home_dir = home::home_dir().unwrap();
                 let sdk_dir_path = PathBuf::from(format!("{}{}", home_dir.to_str().unwrap(), "\\AppData\\Roaming\\Garmin\\ConnectIQ\\Sdks"));
-                for path in fs::read_dir(sdk_dir_path).unwrap() {
+                for path in fs::read_dir(sdk_dir_path).with_context(|| "Unable to read SDK directory contents")? {
                     let path = path.unwrap();
                     sdk_paths.push(path.path());
                     let path = path.file_name().to_str().unwrap().to_string();
