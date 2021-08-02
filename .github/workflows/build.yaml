@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  macOS:
+  build-macOS:
 
     runs-on: macos-latest
 
@@ -26,10 +26,19 @@ jobs:
       - name: Upload built artifact
         uses: actions/upload-artifact@v2
         with:
-          name: Executable
+          name: macOS
           path: target/release/kumitateru
+      - name: Automatic upload to latest alpha
+        uses: marvinpinto/action-automatic-releases@v1.2.1
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest-macos"
+          prerelease: true
+          title: "macOS Latest Development Build"
+          files: |
+            target/release/kumitateru
 
-  Windows:
+  build-Windows:
     runs-on: windows-latest
 
     steps:
@@ -44,10 +53,19 @@ jobs:
       - name: Upload built artifact
         uses: actions/upload-artifact@v2
         with:
-          name: Executable
+          name: Windows
           path: target/release/kumitateru
+      - name: Automatic upload to latest alpha
+        uses: marvinpinto/action-automatic-releases@v1.2.1
+        with:
+          repo_token: "${{ secrets.CD_TOKEN }}"
+          automatic_release_tag: "latest-win"
+          prerelease: true
+          title: "Windows Latest Development Build"
+          files: |
+            target/release/kumitateru.exe
 
-  Ubuntu:
+  build-Ubuntu:
     runs-on: ubuntu-latest
 
     steps:
@@ -62,5 +80,14 @@ jobs:
       - name: Upload built artifact
         uses: actions/upload-artifact@v2
         with:
-          name: Executable
+          name: Linux
           path: target/release/kumitateru
+      - name: Automatic upload to latest alpha
+        uses: marvinpinto/action-automatic-releases@v1.2.1
+        with:
+          repo_token: "${{ secrets.CD_TOKEN }}"
+          automatic_release_tag: "latest-linux"
+          prerelease: true
+          title: "Linux Latest Development Build"
+          files: |
+            target/release/kumitateru
