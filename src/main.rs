@@ -72,20 +72,20 @@ fn main() -> Result<()> {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Building the app..."); }
                         let bin_loc = CIQSdk::bin_location(&*config_struct.package.target_sdk);
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure"); }
-                        verify_app_project();
+                        verify_app_project().with_context(|| "Failed to verify project")?;
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project"); }
                         construct_connectiq_app_project(
                             generate_ciq_manifest(config_struct.clone()).with_context(|| "Unable to generate manifest.xml")?,
                             config_struct.clone().dependencies
-                        );
+                        ).with_context(|| "Failed to construct a ConnectIQ project")?;
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully assembled!".bold().bright_green()); }
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 3:".bold().bright_green(), "Compile the app"); }
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
                             matches.subcommand_matches("build").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
-                            bin_loc,
-                            config_struct);
+                            bin_loc?,
+                            config_struct).with_context(|| "Failed to build a binary")?;
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully built!".bold().bright_green()); }
                     } else if package_type == "lib" {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Kumitateru does not support building libraries(barrels) at the time. Please, replace project_type value with \"app\"."); }
@@ -100,20 +100,20 @@ fn main() -> Result<()> {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Running the app..."); }
                         let bin_loc = CIQSdk::bin_location(&*config_struct.package.target_sdk);
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 1:".bold().bright_green(), "Verify project structure"); }
-                        verify_app_project();
+                        verify_app_project().with_context(|| "Failed to verify project")?;
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 2:".bold().bright_green(), "Assemble a ConnectIQ Project"); }
                         construct_connectiq_app_project(
                             generate_ciq_manifest(config_struct.clone()).with_context(|| "Unable to generate manifest.xml")?,
                             config_struct.clone().dependencies
-                        );
+                        ).with_context(|| "Failed to construct a ConnectIQ project")?;
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully assembled!".bold().bright_green()); }
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 3:".bold().bright_green(), "Compile the app"); }
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
                             matches.subcommand_matches("run").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
-                            bin_loc,
-                            config_struct);
+                            bin_loc?,
+                            config_struct.clone()).with_context(|| "Failed to build a binary")?;
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 4:".bold().bright_green(), "Run"); }
                         if env::var("KMTR_IDE_SILENT").is_ok() { println!("\n=== RUN LOGS ===\n"); }
                         let _ = Command::new("connectiq").status()?; // start the simulator
