@@ -1,42 +1,41 @@
 use yaserde_derive::YaSerialize;
 use yaserde::ser::to_string;
 use crate::ser_de::config::app_config::AppConfig;
+use anyhow::{Result, Context};
 
-pub fn generate_ciq_manifest(toml_config: String) -> String {
-    let parsed_config: AppConfig = toml::from_str(&*toml_config).unwrap();
-
+pub fn generate_ciq_manifest(config: AppConfig) -> Result<String> {
     let mut ciq_products: Vec<CIQProduct> = Vec::new();
     let mut ciq_permissions: Vec<CIQPermission> = Vec::new();
     let mut ciq_languages: Vec<String> = Vec::new();
     let mut ciq_dependencies: Vec<CIQDependency> = Vec::new();
 
-    for entry in parsed_config.package_meta.devices {
+    for entry in config.package_meta.devices {
         ciq_products.push(CIQProduct{ id: entry })
     }
-    for entry in parsed_config.package_meta.permissions {
+    for entry in config.package_meta.permissions {
         ciq_permissions.push(CIQPermission{ id: entry })
     }
-    for entry in parsed_config.package_meta.languages {
+    for entry in config.package_meta.languages {
         ciq_languages.push(entry)
     }
-    for (entry, value) in parsed_config.dependencies {
+    for (entry, value) in config.dependencies {
         ciq_dependencies.push(CIQDependency {
             name: entry,
-            version: value[0].as_str().unwrap().to_string()
+            version: value[0].as_str().with_context(|| format!("Unable to convert value {} to string", value))?.to_string()
         })
     }
 
     let manifest_struct = CIQManifest {
-        xmlns: "http://www.garmin.com/xml/connectiq".parse().unwrap(),
+        xmlns: "http://www.garmin.com/xml/connectiq".parse()?,
         version: 3,
         application: CIQApplication {
-            entry: parsed_config.package.main_class,
-            app_type: parsed_config.package.app_type,
-            id: parsed_config.package_meta.id,
-            launcher_icon: parsed_config.package.icon_resource,
-            name: parsed_config.package.name_res,
-            version: parsed_config.package_meta.version,
-            min_sdk_version: parsed_config.package.min_sdk,
+            entry: config.package.main_class,
+            app_type: config.package.app_type,
+            id: config.package_meta.id,
+            launcher_icon: config.package.icon_resource,
+            name: config.package.name_res,
+            version: config.package_meta.version,
+            min_sdk_version: config.package.min_sdk,
             products: CIQProducts {
                 product: ciq_products
             },
@@ -71,7 +70,7 @@ pub fn generate_ciq_manifest(toml_config: String) -> String {
         .replace("<barrels", "<iq:barrels")
         .replace("</barrels", "</iq:barrels")
         .replace("<depends", "<iq:depends");
-    return serialized_manifest
+    return Ok(serialized_manifest)
 }
 
 #[derive(Default, PartialEq, Debug, YaSerialize)]

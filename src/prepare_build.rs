@@ -4,13 +4,14 @@ use std::path::PathBuf;
 use crate::utils::fs_recursive_copy::{recursive_copy, recursive_delete};
 use crate::ser_de::parse_config::parse_config;
 use toml::value::Table;
+use anyhow::{Result, Context};
 
 /// This function gathers all files from resources and
 /// src directories, and transfers them in build/proj,
 /// where it will be built by monkeyc.
-pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
+pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) -> Result<()> {
     if PathBuf::from("build/tmp").exists() {
-        recursive_delete("build/tmp");
+        recursive_delete("build/tmp").with_context(|| "An error occurred while clearing build/tmp")?;
     }
     let _ = fs::create_dir("build");
     let _ = fs::create_dir("build/tmp");
@@ -30,8 +31,8 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
     for resource in vec!["resources/drawables", "resources/layouts", "resources/fonts", "resources/menus", "resources/settings"] {
         for entry in fs::read_dir(PathBuf::from(resource)) {
             for entry in entry {
-                let entry = entry.unwrap();
-                if entry.file_type().unwrap().is_dir() {
+                let entry = entry?;
+                if entry.file_type()?.is_dir() {
                     if !device_specific_res.contains(&entry.file_name().to_str().unwrap().to_string()) {
                         device_specific_res.push(entry.file_name().to_str().unwrap().to_string());
                     }
@@ -61,7 +62,7 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
             let mut start_directory = PathBuf::from("resources/strings");
             start_directory.push("main");
 
-            recursive_copy(start_directory, end_dir);
+            recursive_copy(start_directory.clone(), end_dir.clone()).with_context(|| format!("Failed to copy {:?} dir(and it's contents) to {:?}", start_directory, end_dir))?;
         } else {
             let mut end_dir = PathBuf::from("build/tmp");
             let mut end_dirname: String = "resources-".parse().unwrap();
@@ -72,24 +73,24 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
             let mut start_directory = PathBuf::from("resources/strings");
             start_directory.push(language);
 
-            recursive_copy(start_directory, end_dir);
+            recursive_copy(start_directory.clone(), end_dir.clone()).with_context(|| format!("Failed to copy {:?} dir(and it's contents) to {:?}", start_directory, end_dir))?;
         }
     }
 
     // And here we will transfer other resources
     for resource in vec!["drawables", "layouts", "fonts", "menus", "settings"] {
-        transfer_device_resources(resource.to_string(), device_specific_res.clone());
-        let mut dir = PathBuf::from("build/tmp/resources");
+        transfer_device_resources(resource.to_string(), device_specific_res.clone()).with_context(|| "Failed to transfer device-specific resources")?;
+        let mut dir = PathBuf::from("build/tmp/resources/");
         dir.push(resource);
-        fs::create_dir(&dir);
+        fs::create_dir(&dir).with_context(|| format!("Failed to create {:?}", dir))?;
         transfer_main_resources(resource.to_string());
     }
 
     // At last we transfer dependencies...
-    fs::create_dir(PathBuf::from("build/tmp/dependencies/"));
+    fs::create_dir(PathBuf::from("build/tmp/dependencies/")).with_context(|| "Failed to create build/tmp/dependencies/")?;
     for (_, value) in dependencies.clone() {
         let output = PathBuf::from(format!("{}{}","build/tmp/dependencies/", value[1].as_str().unwrap()));
-        fs::copy(format!("{}/{}", "dependencies", value[1].as_str().unwrap()), output);
+        fs::copy(format!("{}/{}", "dependencies", value[1].as_str().unwrap()), output).with_context(|| format!("Failed to copy {}", format!("{}/{}", "dependencies", value[1].as_str().unwrap())))?;
     }
 
     // ...and generate monkey.jungle with all needed data
@@ -100,7 +101,8 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) {
         monkey_jungle_data.push_str(&*format!("{} = \"{}\"\n", entry, format!("dependencies/{}", value[1].as_str().unwrap())));
         monkey_jungle_data.push_str(&*format!("base.barrelPath = $(base.barrelPath);$({})\n", entry));
     }
-    fs::write(PathBuf::from("build/tmp/monkey.jungle"), monkey_jungle_data);
+    fs::write(PathBuf::from("build/tmp/monkey.jungle"), monkey_jungle_data).with_context(|| "Failed to write to build/tmp/monkey.jungle")?;
+    Ok(())
 }
 
 fn transfer_main_resources(resource: String) {
@@ -114,12 +116,12 @@ fn transfer_main_resources(resource: String) {
             end_dir.push(&resource);
             end_dir.push(entry.file_name());
 
-            fs::copy(entry.path(), end_dir);
+            fs::copy(entry.path(), end_dir.clone()).with_context(|| format!("Failed to copy {:?} to {:?}", entry.path(), end_dir));
         }
     }
 }
 
-fn transfer_device_resources(resource: String, device_specific_res: Vec<String>) {
+fn transfer_device_resources(resource: String, device_specific_res: Vec<String>) -> Result<()> {
     for res_entry in device_specific_res {
         let mut res_dir = PathBuf::new();
         res_dir.push("resources");
@@ -132,8 +134,8 @@ fn transfer_device_resources(resource: String, device_specific_res: Vec<String>)
             end_dir.push(end_dirname);
             end_dir.push(&resource);
 
-            recursive_copy(res_dir, &end_dir);
+            recursive_copy(&res_dir, &end_dir).with_context(|| format!("Failed to copy {:?} to {:?}", res_dir, end_dir))?;
         }
     }
-
+    Ok(())
 }
