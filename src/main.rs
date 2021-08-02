@@ -84,7 +84,8 @@ fn main() -> Result<()> {
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
                             matches.subcommand_matches("build").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
-                            bin_loc);
+                            bin_loc,
+                            config_struct);
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully built!".bold().bright_green()); }
                     } else if package_type == "lib" {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Kumitateru does not support building libraries(barrels) at the time. Please, replace project_type value with \"app\"."); }
@@ -111,7 +112,8 @@ fn main() -> Result<()> {
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
                             matches.subcommand_matches("run").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
-                            bin_loc);
+                            bin_loc,
+                            config_struct);
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 4:".bold().bright_green(), "Run"); }
                         if env::var("KMTR_IDE_SILENT").is_ok() { println!("\n=== RUN LOGS ===\n"); }
                         let _ = Command::new("connectiq").status()?; // start the simulator
