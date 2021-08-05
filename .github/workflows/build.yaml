@@ -24,6 +24,8 @@ jobs:
         run: cargo build --release
       - name: Install Windows target
         run: rustup target add x86_64-pc-windows-gnu
+      - name: Install MinGW
+        run: brew install mingw-w64
 #      - name: Install Linux target
 #        run: rustup target add x86_64-unknown-linux-musl
       - name: Release version for Windows
