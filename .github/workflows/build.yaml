@@ -22,11 +22,14 @@ jobs:
         run: cargo test --verbose
       - name: Also build a release version for macOS
         run: cargo build --release
+      - name: Install Windows target
+        run: rustup target add x86_64-pc-windows-gnu
+#      - name: Install Linux target
+#        run: rustup target add x86_64-unknown-linux-musl
       - name: Release version for Windows
         run: cargo build --release --target x86_64-pc-windows-gnu
-      - name: Release version for Linux
-        run: cargo build --release --target x86_64-unknown-linux-musl
-
+#      - name: Release version for Linux
+#        run: cargo build --release --target x86_64-unknown-linux-musl
 
       - name: Upload built artifact
         uses: actions/upload-artifact@v2
