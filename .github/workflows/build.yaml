@@ -20,8 +20,13 @@ jobs:
         run: cargo build --verbose
       - name: Run tests
         run: cargo test --verbose
-      - name: Also build a release version
-        run: cargo build --release --verbose
+      - name: Also build a release version for macOS
+        run: cargo build --release
+      - name: Release version for Windows
+        run: cargo build --release --target x86_64-pc-windows-gnu
+      - name: Release version for Linux
+        run: cargo build --release --target x86_64-unknown-linux-musl
+
 
       - name: Upload built artifact
         uses: actions/upload-artifact@v2
@@ -32,11 +37,13 @@ jobs:
         uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest-macos"
+          automatic_release_tag: "latest"
           prerelease: true
-          title: "macOS Latest Development Build"
+          title: "Latest Build"
           files: |
             target/release/kumitateru
+            target/x86_64-pc-windows-gnu/release/kumitateru.exe
+            target/x86_64-unknown-linux-musl/release/kumitateru
 
   build-Windows:
     runs-on: windows-latest
