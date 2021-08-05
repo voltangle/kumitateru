@@ -13,6 +13,7 @@ use compile_project::compile_app_project;
 use clap::{Arg, SubCommand, App};
 use std::path::PathBuf;
 use std::process::Command;
+use std::io;
 use serde::Deserialize;
 use crate::ser_de::manifest::manifest_utils::generate_ciq_manifest;
 use crate::ciq_sdk::CIQSdk;
@@ -56,36 +57,29 @@ fn main() -> Result<()> {
         .subcommand(SubCommand::with_name("new"))
         .get_matches();
 
-    let mut config_str: Option<String> = None;
-    let mut config_struct: Option<AppConfig> = None;
-    let mut package_type: Option<String> = None;
-
-    if matches.subcommand_name().unwrap() != "new" {
-        config_str = Some(fs::read_to_string("package.toml").with_context(|| "Unable to read package.toml")?);
-        config_struct = Some(toml::from_str::<AppConfig>(&*config_str.as_ref().unwrap()).with_context(|| "Unable to parse package.toml")?);
-        package_type = Some(toml::from_str::<AppBarrelCheck>(&*config_str.as_ref().unwrap()).with_context(|| "Unable to parse package.toml")?.package.package_type);
-    }
-
     match matches.subcommand_name() {
         Some(name) => {
             match name {
                 "build" => {
-                    if package_type.as_ref().unwrap() == "app"  {
+                    let config_str = fs::read_to_string("package.toml").with_context(|| "Unable to read package.toml")?;
+                    let config_struct = toml::from_str::<AppConfig>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?;
+                    let package_type = toml::from_str::<AppBarrelCheck>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?.package.package_type;
+                    if package_type == String::from("app")  {
                         let target = matches.subcommand_matches("run").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?;
-                        if !config_struct.as_ref().unwrap().package_meta.devices.contains(&target.to_string()) {
+                        if !config_struct.package_meta.devices.contains(&target.to_string()) {
                             eprintln!("Bad target specified. Please use one from your package.toml");
                             process::exit(13);
                         }
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Building the app..."); }
-                        let bin_loc = pre_compilation_steps(config_struct.as_ref().unwrap().clone()).with_context(|| "Unable to execute pre-compilation steps")?;
+                        let bin_loc = pre_compilation_steps(config_struct.clone()).with_context(|| "Unable to execute pre-compilation steps")?;
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
                             matches.subcommand_matches("build").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
                             bin_loc,
-                            config_struct.unwrap()).with_context(|| "Failed to build a binary")?;
+                            config_struct).with_context(|| "Failed to build a binary")?;
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully built!".bold().bright_green()); }
-                    } else if package_type.unwrap() == "lib" {
+                    } else if package_type == String::from("lib") {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Kumitateru does not support building libraries(barrels) at the time. Please, replace project_type value with \"app\"."); }
                         process::exit(12); // Exit code 12 indicates that the project config has bad project type
                     } else {
@@ -94,27 +88,30 @@ fn main() -> Result<()> {
                     }
                 }
                 "run" => {
-                    if package_type.unwrap() == "app" {
+                    let config_str = fs::read_to_string("package.toml").with_context(|| "Unable to read package.toml")?;
+                    let config_struct = toml::from_str::<AppConfig>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?;
+                    let package_type = toml::from_str::<AppBarrelCheck>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?.package.package_type;
+                    if package_type == "app" {
                         let target = matches.subcommand_matches("run").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?;
-                        if !config_struct.as_ref().unwrap().package_meta.devices.contains(&target.to_string()) || target != "all" {
+                        if !config_struct.package_meta.devices.contains(&target.to_string()) || target != "all" {
                             eprintln!("Bad target specified. Please use one from your package.toml");
                             process::exit(13);
                         }
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Running the app..."); }
-                        let bin_loc = pre_compilation_steps(config_struct.as_ref().unwrap().clone()).with_context(|| "Unable to execute pre-compilation steps")?;
+                        let bin_loc = pre_compilation_steps(config_struct.clone()).with_context(|| "Unable to execute pre-compilation steps")?;
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/output"),
                             matches.subcommand_matches("run").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
                             bin_loc,
-                            config_struct.as_ref().unwrap().clone()).with_context(|| "Failed to build a binary")?;
+                            config_struct.clone()).with_context(|| "Failed to build a binary")?;
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 4:".bold().bright_green(), "Run"); }
                         if env::var("KMTR_IDE_SILENT").is_ok() { println!("\n=== RUN LOGS ===\n"); }
                         let _ = Command::new("connectiq").status()?; // start the simulator
                         thread::sleep(time::Duration::from_millis(2000)); // idk how to fix the race issue when monkeydo is unable to connect to the simulator because it has not started at the time other that like this
                         let _ = Command::new("monkeydo")
                             .args(&[
-                                format!("{}{}.prg", "build/output/", config_struct.as_ref().unwrap().clone().package_meta.name),
+                                format!("{}{}.prg", "build/output/", config_struct.clone().package_meta.name),
                                 matches.subcommand_matches("run").unwrap().value_of("target").unwrap().to_string()
                             ]).status()?;
                     } else {
@@ -125,15 +122,18 @@ fn main() -> Result<()> {
                     }
                 }
                 "package" => {
-                    if package_type.unwrap() == "app" {
+                    let config_str = fs::read_to_string("package.toml").with_context(|| "Unable to read package.toml")?;
+                    let config_struct = toml::from_str::<AppConfig>(&*config_str).with_context(|| "Unable to parse package.toml")?;
+                    let package_type = toml::from_str::<AppBarrelCheck>(&*config_str).with_context(|| "Unable to parse package.toml")?.package.package_type;
+                    if package_type == "app" {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Packaging the app..."); }
-                        let bin_loc = pre_compilation_steps(config_struct.as_ref().unwrap().clone()).with_context(|| "Unable to execute pre-compilation steps")?;
+                        let bin_loc = pre_compilation_steps(config_struct.clone()).with_context(|| "Unable to execute pre-compilation steps")?;
                         compile_app_project(
                             PathBuf::from("build/tmp"),
                             PathBuf::from("build/bin"),
                             "package",
                             bin_loc,
-                            config_struct.as_ref().unwrap().clone()).with_context(|| "Failed to build a binary")?;
+                            config_struct.clone()).with_context(|| "Failed to build a binary")?;
                     } else {
                         if !env::var("KMTR_IDE_SILENT").is_ok() {
                             eprintln!("{}{}{}{}{}", "Sorry, this project is not an app, it is a".bright_red(), "library".bold().bright_red(), "(barrel). You can't use".bright_red(), "run".bold().bright_red(), "with libraries!".bright_red());
@@ -142,7 +142,13 @@ fn main() -> Result<()> {
                     }
                 }
                 "new" => {
-                    todo!("Not implemented")
+                    let mut proj_name = String::new();
+                    let mut proj_type = String::new();
+                    println!("{}", "Welcome to Kumitateru new project wizard!".bold());
+                    println!("What should we call this project?");
+                    io::stdin().read_line(&mut proj_name);
+                    proj_type = get_proj_type();
+                    println!("")
                 }
                 &_ => {}
             }
@@ -152,6 +158,24 @@ fn main() -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn get_proj_type() -> String {
+    let mut proj_type = String::new();
+    let acceptable_proj_types: Vec<String> = vec!(
+        "watch-app\n".to_string(),
+        "watchface\n".to_string(),
+        "datafield\n".to_string(),
+        "widget\n".to_string(),
+        "audio-content-provider\n".to_string()
+    );
+    println!("Now what type is your app?");
+    io::stdin().read_line(&mut proj_type);
+    if !acceptable_proj_types.contains(&proj_type) {
+        println!("{}", "Bad project type. Please try again.".bright_red());
+        proj_type = get_proj_type();
+    }
+    proj_type
 }
 
 fn pre_compilation_steps(config: AppConfig) -> Result<PathBuf> {
