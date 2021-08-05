@@ -32,6 +32,10 @@ jobs:
         run: cargo build --release --target x86_64-pc-windows-gnu
 #      - name: Release version for Linux
 #        run: cargo build --release --target x86_64-unknown-linux-musl
+      - name: Rename build artifacts
+        run: |
+          mv target/release/kumitateru target/release/kmtr-mac
+          mv target/x86_64-pc-windows-gnu/release/kmtr-win.exe
 
       - name: Upload built artifact
         uses: actions/upload-artifact@v2
@@ -46,8 +50,8 @@ jobs:
           prerelease: true
           title: "Latest Build"
           files: |
-            target/release/kumitateru
-            target/x86_64-pc-windows-gnu/release/kumitateru.exe
+            target/release/kmtr-mac
+            target/x86_64-pc-windows-gnu/release/kmtr-win.exe
 #            target/x86_64-unknown-linux-musl/release/kumitateru
 
   build-Windows:
