@@ -35,7 +35,7 @@ jobs:
       - name: Rename build artifacts
         run: |
           mv target/release/kumitateru target/release/kmtr-mac
-          mv target/x86_64-pc-windows-gnu/release/kmtr-win.exe
+          mv target/x86_64-pc-windows-gnu/release/kumitateru.exe target/x86_64-pc-windows-gnu/release/kmtr-win.exe
 
       - name: Upload built artifact
         uses: actions/upload-artifact@v2
