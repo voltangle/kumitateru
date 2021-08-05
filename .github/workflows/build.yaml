@@ -67,15 +67,6 @@ jobs:
         with:
           name: Windows
           path: target/release/kumitateru
-      - name: Automatic upload to latest alpha
-        uses: marvinpinto/action-automatic-releases@v1.2.1
-        with:
-          repo_token: "${{ secrets.CD_TOKEN }}"
-          automatic_release_tag: "latest-win"
-          prerelease: true
-          title: "Windows Latest Development Build"
-          files: |
-            target/release/kumitateru.exe
 
   build-Ubuntu:
     runs-on: ubuntu-latest
@@ -94,12 +85,3 @@ jobs:
         with:
           name: Linux
           path: target/release/kumitateru
-      - name: Automatic upload to latest alpha
-        uses: marvinpinto/action-automatic-releases@v1.2.1
-        with:
-          repo_token: "${{ secrets.CD_TOKEN }}"
-          automatic_release_tag: "latest-linux"
-          prerelease: true
-          title: "Linux Latest Development Build"
-          files: |
-            target/release/kumitateru
