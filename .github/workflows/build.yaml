@@ -48,7 +48,7 @@ jobs:
           files: |
             target/release/kumitateru
             target/x86_64-pc-windows-gnu/release/kumitateru.exe
-            target/x86_64-unknown-linux-musl/release/kumitateru
+#            target/x86_64-unknown-linux-musl/release/kumitateru
 
   build-Windows:
     runs-on: windows-latest
