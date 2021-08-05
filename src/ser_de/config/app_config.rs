@@ -41,7 +41,7 @@ pub struct AppConfigPackageMeta {
 #[derive(Clone)]
 pub struct AppConfigBuild {
     pub signing_key: String,
-    pub code_analysis_on_build: bool,
+    // pub code_analysis_on_build: bool,
     pub type_check_level: i8,
     pub compiler_args: String,
 }
