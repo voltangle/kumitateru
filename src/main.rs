@@ -20,6 +20,7 @@ use crate::ciq_sdk::CIQSdk;
 use anyhow::Context;
 use anyhow::Result;
 use crate::ser_de::config::app_config::AppConfig;
+use regex::Regex;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -144,11 +145,14 @@ fn main() -> Result<()> {
                 "new" => {
                     let mut proj_name = String::new();
                     let mut proj_type = String::new();
+                    let mut proj_min_sdk = String::new();
+                    let mut proj_target_sdk = String::new();
                     println!("{}", "Welcome to Kumitateru new project wizard!".bold());
                     println!("What should we call this project?");
                     io::stdin().read_line(&mut proj_name);
                     proj_type = get_proj_type();
-                    println!("")
+                    proj_min_sdk = get_version(VersionType::MinSDK);
+                    proj_target_sdk = get_version(VersionType::TargetSDK);
                 }
                 &_ => {}
             }
@@ -158,6 +162,26 @@ fn main() -> Result<()> {
         }
     }
     Ok(())
+}
+
+fn get_version(ver_type: VersionType) -> String {
+    match ver_type {
+        VersionType::MinSDK => {
+            println!("What minimum SDK will your app support?");
+        }
+        VersionType::TargetSDK => {
+            println!("What SDK will your app target?");
+
+        }
+    }
+    let version_regex = Regex::new(r#"[0-9]+\.[0-9]+\.[0-9]+(\.[0-9a-zA-Z_]+)?"#).unwrap();
+    let mut version = String::new();
+    io::stdin().read_line(&mut version);
+    if !version_regex.is_match(&*version) {
+        println!("{}", "Bad version format. Please try again!".bright_red());
+        get_version(ver_type);
+    }
+    return version
 }
 
 fn get_proj_type() -> String {
@@ -190,4 +214,9 @@ fn pre_compilation_steps(config: AppConfig) -> Result<PathBuf> {
     if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully assembled!".bold().bright_green()); }
     if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 3:".bold().bright_green(), "Compile the app"); }
     Ok(bin_loc)
+}
+
+enum VersionType {
+    MinSDK,
+    TargetSDK,
 }
