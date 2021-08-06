@@ -167,15 +167,23 @@ fn main() -> Result<()> {
                     io::stdin().read_line(&mut proj_name);
                     {
                         let mut selected = 0;
+                        // This is a thing to fix issues with resizing of the terminal window.
+                        // When the window resizes, a print of arrow selection is done again,
+                        // so we need some sort of protection against it. This variable will be
+                        // false if the window was just resized, because of that continue; statement
+                        // at that piece of code that handles resizing. If no resizing was done,
+                        // then it would pass to the end of the loop code and make this variable
+                        // true again, making selection text to show again. I hope this clarifies
+                        // what this variable does :D
                         let mut selection_to_show = true;
                         loop {
                             if selection_to_show {
                                 print!("{}", construct_arrow_selection("Now what type is your app?", vec!(
-                                    "watch-app",
-                                    "watchface",
-                                    "datafield",
-                                    "widget",
-                                    "audio-content-provider"
+                                    "Watch app",
+                                    "Watchface",
+                                    "Datafield",
+                                    "Widget",
+                                    "Audio content provider"
                                 ), selected));
                             }
                             selection_to_show = false;
