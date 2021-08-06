@@ -21,6 +21,21 @@ use anyhow::Context;
 use anyhow::Result;
 use crate::ser_de::config::app_config::AppConfig;
 use regex::Regex;
+use crate::utils::arrow_selection::construct_arrow_selection;
+use std::str;
+use crossterm::{
+    event::{
+        read,
+        Event,
+        KeyEvent,
+        KeyCode,
+        KeyModifiers
+    },
+    terminal,
+    terminal::*,
+    ExecutableCommand,
+    cursor
+};
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -150,7 +165,57 @@ fn main() -> Result<()> {
                     println!("{}", "Welcome to Kumitateru new project wizard!".bold());
                     println!("What should we call this project?");
                     io::stdin().read_line(&mut proj_name);
-                    proj_type = get_proj_type();
+                    {
+                        let mut selected = 0;
+                        loop {
+                            print!("{}", construct_arrow_selection("Now what type is your app?", vec!(
+                                "watch-app",
+                                "watchface",
+                                "datafield",
+                                "widget",
+                                "audio-content-provider"
+                            ), selected));
+
+                            enable_raw_mode();
+                            let event = read()?;
+
+                            if event == Event::Key(KeyCode::Up.into()) {
+                                disable_raw_mode();
+                                if selected == 0 {
+                                    selected = 4;
+                                } else {
+                                    selected -= 1;
+                                }
+                                for _ in 0..6 {
+                                    io::stdout().execute(terminal::Clear(terminal::ClearType::CurrentLine));
+                                    io::stdout().execute(cursor::MoveUp(1));
+                                }
+                            }
+
+                            if event == Event::Key(KeyCode::Down.into()) {
+                                disable_raw_mode();
+                                if selected == 4 {
+                                    selected = 0;
+                                } else {
+                                    selected += 1;
+                                }
+                                for _ in 0..6 {
+                                    io::stdout().execute(terminal::Clear(terminal::ClearType::CurrentLine));
+                                    io::stdout().execute(cursor::MoveUp(1));
+                                }
+                            }
+
+                            if event == Event::Key(KeyEvent { modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c') }) {
+                                disable_raw_mode();
+                                process::exit(1);
+                            }
+
+                            if event == Event::Key(KeyCode::Enter.into()) {
+                                disable_raw_mode();
+                                break;
+                            }
+                        }
+                    }
                     proj_min_sdk = get_version(VersionType::MinSDK);
                     proj_target_sdk = get_version(VersionType::TargetSDK);
                 }
@@ -161,6 +226,7 @@ fn main() -> Result<()> {
             println!("{}", matches.usage());
         }
     }
+    disable_raw_mode();
     Ok(())
 }
 
@@ -171,7 +237,6 @@ fn get_version(ver_type: VersionType) -> String {
         }
         VersionType::TargetSDK => {
             println!("What SDK will your app target?");
-
         }
     }
     let version_regex = Regex::new(r#"[0-9]+\.[0-9]+\.[0-9]+(\.[0-9a-zA-Z_]+)?"#).unwrap();
@@ -182,24 +247,6 @@ fn get_version(ver_type: VersionType) -> String {
         get_version(ver_type);
     }
     return version
-}
-
-fn get_proj_type() -> String {
-    let mut proj_type = String::new();
-    let acceptable_proj_types: Vec<String> = vec!(
-        "watch-app\n".to_string(),
-        "watchface\n".to_string(),
-        "datafield\n".to_string(),
-        "widget\n".to_string(),
-        "audio-content-provider\n".to_string()
-    );
-    println!("Now what type is your app?");
-    io::stdin().read_line(&mut proj_type);
-    if !acceptable_proj_types.contains(&proj_type) {
-        println!("{}", "Bad project type. Please try again.".bright_red());
-        proj_type = get_proj_type();
-    }
-    proj_type
 }
 
 fn pre_compilation_steps(config: AppConfig) -> Result<PathBuf> {
