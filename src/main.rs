@@ -167,17 +167,28 @@ fn main() -> Result<()> {
                     io::stdin().read_line(&mut proj_name);
                     {
                         let mut selected = 0;
+                        let mut selection_to_show = true;
                         loop {
-                            print!("{}", construct_arrow_selection("Now what type is your app?", vec!(
-                                "watch-app",
-                                "watchface",
-                                "datafield",
-                                "widget",
-                                "audio-content-provider"
-                            ), selected));
+                            if selection_to_show {
+                                print!("{}", construct_arrow_selection("Now what type is your app?", vec!(
+                                    "watch-app",
+                                    "watchface",
+                                    "datafield",
+                                    "widget",
+                                    "audio-content-provider"
+                                ), selected));
+                            }
+                            selection_to_show = false;
 
                             enable_raw_mode();
                             let event = read()?;
+                            match event {
+                                Event::Resize(w, h) => {
+                                    disable_raw_mode();
+                                    continue;
+                                }
+                                _ => {}
+                            }
 
                             if event == Event::Key(KeyCode::Up.into()) {
                                 disable_raw_mode();
@@ -214,6 +225,7 @@ fn main() -> Result<()> {
                                 disable_raw_mode();
                                 break;
                             }
+                            selection_to_show = true;
                         }
                     }
                     proj_min_sdk = get_version(VersionType::MinSDK);
