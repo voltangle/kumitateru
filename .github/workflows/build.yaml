@@ -11,8 +11,6 @@ env:
 
 jobs:
   build-macOS:
-    env:
-      PACKAGE_VER: ")"
     runs-on: macos-latest
 
     steps:
@@ -43,16 +41,13 @@ jobs:
         with:
           name: macOS
           path: target/release/kumitateru
-      - name: Get package version
-        run: |
-          echo "grep -m 1 '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9a-zA-Z_]+)?' Cargo.toml | head -1" >> $PACKAGE_VER
       - name: Automatic upload to latest alpha
         uses: marvinpinto/action-automatic-releases@v1.2.1
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: true
-          title: "Latest Build ${{ env.PACKAGE_VER }}"
+          title: "Latest Build"
           files: |
             target/release/kmtr-mac
             target/x86_64-pc-windows-gnu/release/kmtr-win.exe
