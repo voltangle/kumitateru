@@ -51,7 +51,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: true
-          title: "Latest Build ${PACKAGE_VER}"
+          title: "Latest Build ${{ PACKAGE_VER }}"
           files: |
             target/release/kmtr-mac
             target/x86_64-pc-windows-gnu/release/kmtr-win.exe
