@@ -159,32 +159,34 @@ fn main() -> Result<()> {
                 }
                 "new" => {
                     let mut proj_name = String::new();
-                    let mut proj_type = String::new();
+                    let mut proj_type: i8;
                     let mut proj_min_sdk = String::new();
                     let mut proj_target_sdk = String::new();
                     println!("{}", "Welcome to Kumitateru new project wizard!".bold());
                     println!("What should we call this project?");
                     io::stdin().read_line(&mut proj_name);
                     {
-                        let mut selected = 0;
+                        let mut highlighted = 0;
                         // This is a thing to fix issues with resizing of the terminal window.
                         // When the window resizes, a print of arrow selection is done again,
                         // so we need some sort of protection against it. This variable will be
                         // false if the window was just resized, because of that continue; statement
                         // at that piece of code that handles resizing. If no resizing was done,
                         // then it would pass to the end of the loop code and make this variable
-                        // true again, making selection text to show again. I hope this clarifies
+                        // true again, making selection text to be show again. I hope this clarifies
                         // what this variable does :D
                         let mut selection_to_show = true;
+                        let mut exiting_state = false;
                         loop {
                             if selection_to_show {
                                 print!("{}", construct_arrow_selection("Now what type is your app?", vec!(
-                                    "Watch app",
+                                    "App",
                                     "Watchface",
                                     "Datafield",
                                     "Widget",
                                     "Audio content provider"
-                                ), selected));
+                                ), highlighted, if exiting_state { true } else { false }));
+                                if exiting_state { break }
                             }
                             selection_to_show = false;
 
@@ -200,10 +202,10 @@ fn main() -> Result<()> {
 
                             if event == Event::Key(KeyCode::Up.into()) {
                                 disable_raw_mode();
-                                if selected == 0 {
-                                    selected = 4;
+                                if highlighted == 0 {
+                                    highlighted = 4;
                                 } else {
-                                    selected -= 1;
+                                    highlighted -= 1;
                                 }
                                 for _ in 0..6 {
                                     io::stdout().execute(terminal::Clear(terminal::ClearType::CurrentLine));
@@ -213,10 +215,10 @@ fn main() -> Result<()> {
 
                             if event == Event::Key(KeyCode::Down.into()) {
                                 disable_raw_mode();
-                                if selected == 4 {
-                                    selected = 0;
+                                if highlighted == 4 {
+                                    highlighted = 0;
                                 } else {
-                                    selected += 1;
+                                    highlighted += 1;
                                 }
                                 for _ in 0..6 {
                                     io::stdout().execute(terminal::Clear(terminal::ClearType::CurrentLine));
@@ -231,7 +233,12 @@ fn main() -> Result<()> {
 
                             if event == Event::Key(KeyCode::Enter.into()) {
                                 disable_raw_mode();
-                                break;
+                                proj_type = highlighted;
+                                exiting_state = true;
+                                for _ in 0..6 {
+                                    io::stdout().execute(terminal::Clear(terminal::ClearType::CurrentLine));
+                                    io::stdout().execute(cursor::MoveUp(1));
+                                }
                             }
                             selection_to_show = true;
                         }
