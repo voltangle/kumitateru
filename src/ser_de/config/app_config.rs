@@ -1,8 +1,7 @@
 use serde::Deserialize;
 use toml::value::Table;
 
-#[derive(Deserialize)]
-#[derive(Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AppConfig {
     pub package: AppConfigPackage,
     pub package_meta: AppConfigPackageMeta,
@@ -10,8 +9,7 @@ pub struct AppConfig {
     pub dependencies: Table,
 }
 
-#[derive(Deserialize)]
-#[derive(Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AppConfigPackage {
     pub icon_resource: String,
     /// Name resource.
@@ -26,8 +24,7 @@ pub struct AppConfigPackage {
     pub target_sdk: String,
 }
 
-#[derive(Deserialize)]
-#[derive(Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AppConfigPackageMeta {
     pub name: String,
     pub id: String,
@@ -37,8 +34,7 @@ pub struct AppConfigPackageMeta {
     pub languages: Vec<String>,
 }
 
-#[derive(Deserialize)]
-#[derive(Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct AppConfigBuild {
     pub signing_key: String,
     // pub code_analysis_on_build: bool,
