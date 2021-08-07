@@ -19,23 +19,10 @@ use crate::ser_de::manifest::manifest_utils::generate_ciq_manifest;
 use crate::ciq_sdk::CIQSdk;
 use anyhow::Context;
 use anyhow::Result;
-use crate::ser_de::config::app_config::AppConfig;
+use crate::ser_de::config::app_config::{AppConfig, AppConfigPackage, AppConfigPackageMeta, AppConfigBuild};
 use regex::Regex;
-use crate::utils::arrow_selection::construct_arrow_selection;
-use std::str;
-use crossterm::{
-    event::{
-        read,
-        Event,
-        KeyEvent,
-        KeyCode,
-        KeyModifiers
-    },
-    terminal,
-    terminal::*,
-    ExecutableCommand,
-    cursor
-};
+use crate::utils::arrow_selection::display_cli_selection;
+use crossterm::terminal::disable_raw_mode;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -162,89 +149,55 @@ fn main() -> Result<()> {
                     let mut proj_type: i8;
                     let mut proj_min_sdk = String::new();
                     let mut proj_target_sdk = String::new();
+                    let mut proj_signing_key: Option<PathBuf> = None; // If none, then a new key should be generated. If some, then it will be imported
                     println!("{}", "Welcome to Kumitateru new project wizard!".bold());
                     println!("What should we call this project?");
                     io::stdin().read_line(&mut proj_name);
-                    {
-                        let mut highlighted = 0;
-                        // This is a thing to fix issues with resizing of the terminal window.
-                        // When the window resizes, a print of arrow selection is done again,
-                        // so we need some sort of protection against it. This variable will be
-                        // false if the window was just resized, because of that continue; statement
-                        // at that piece of code that handles resizing. If no resizing was done,
-                        // then it would pass to the end of the loop code and make this variable
-                        // true again, making selection text to be show again. I hope this clarifies
-                        // what this variable does :D
-                        let mut selection_to_show = true;
-                        let mut exiting_state = false;
-                        loop {
-                            if selection_to_show {
-                                print!("{}", construct_arrow_selection("Now what type is your app?", vec!(
-                                    "App",
-                                    "Watchface",
-                                    "Datafield",
-                                    "Widget",
-                                    "Audio content provider"
-                                ), highlighted, if exiting_state { true } else { false }));
-                                if exiting_state { break }
-                            }
-                            selection_to_show = false;
+                    proj_type = display_cli_selection(
+                        "Now what type is your app?",
+                        vec!(
+                            "App",
+                            "Watchface",
+                            "Datafield",
+                            "Widget",
+                            "Audio content provider"
+                        ))? as i8;
 
-                            enable_raw_mode();
-                            let event = read()?;
-                            match event {
-                                Event::Resize(w, h) => {
-                                    disable_raw_mode();
-                                    continue;
-                                }
-                                _ => {}
-                            }
-
-                            if event == Event::Key(KeyCode::Up.into()) {
-                                disable_raw_mode();
-                                if highlighted == 0 {
-                                    highlighted = 4;
-                                } else {
-                                    highlighted -= 1;
-                                }
-                                for _ in 0..6 {
-                                    io::stdout().execute(terminal::Clear(terminal::ClearType::CurrentLine));
-                                    io::stdout().execute(cursor::MoveUp(1));
-                                }
-                            }
-
-                            if event == Event::Key(KeyCode::Down.into()) {
-                                disable_raw_mode();
-                                if highlighted == 4 {
-                                    highlighted = 0;
-                                } else {
-                                    highlighted += 1;
-                                }
-                                for _ in 0..6 {
-                                    io::stdout().execute(terminal::Clear(terminal::ClearType::CurrentLine));
-                                    io::stdout().execute(cursor::MoveUp(1));
-                                }
-                            }
-
-                            if event == Event::Key(KeyEvent { modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c') }) {
-                                disable_raw_mode();
-                                process::exit(1);
-                            }
-
-                            if event == Event::Key(KeyCode::Enter.into()) {
-                                disable_raw_mode();
-                                proj_type = highlighted;
-                                exiting_state = true;
-                                for _ in 0..6 {
-                                    io::stdout().execute(terminal::Clear(terminal::ClearType::CurrentLine));
-                                    io::stdout().execute(cursor::MoveUp(1));
-                                }
-                            }
-                            selection_to_show = true;
-                        }
-                    }
                     proj_min_sdk = get_version(VersionType::MinSDK);
+
                     proj_target_sdk = get_version(VersionType::TargetSDK);
+
+                    if display_cli_selection("Generate a new signing key or import one?", vec!("Generate a new key", "Import an existing key"))? == 1 {
+                        println!("Please type the path to your key:");
+                        let mut path = String::new();
+                        io::stdin().read_line(&mut path);
+                        proj_signing_key = Some(PathBuf::from(path));
+                    }
+
+                    let toml_config = AppConfig {
+                        package: AppConfigPackage {
+                            icon_resource: "".to_string(),
+                            name_res: "".to_string(),
+                            main_class: "".to_string(),
+                            app_type: "".to_string(),
+                            min_sdk: "".to_string(),
+                            target_sdk: "".to_string()
+                        },
+                        package_meta: AppConfigPackageMeta {
+                            name: "".to_string(),
+                            id: "".to_string(),
+                            version: "".to_string(),
+                            devices: vec![],
+                            permissions: vec![],
+                            languages: vec![]
+                        },
+                        build: AppConfigBuild {
+                            signing_key: "".to_string(),
+                            type_check_level: 0,
+                            compiler_args: "".to_string()
+                        },
+                        dependencies: Default::default()
+                    };
                 }
                 &_ => {}
             }
@@ -253,17 +206,17 @@ fn main() -> Result<()> {
             println!("{}", matches.usage());
         }
     }
-    disable_raw_mode();
+    disable_raw_mode(); // Just in case
     Ok(())
 }
 
 fn get_version(ver_type: VersionType) -> String {
     match ver_type {
         VersionType::MinSDK => {
-            println!("What minimum SDK will your app support?");
+            println!("\nWhat minimum SDK will your app support?");
         }
         VersionType::TargetSDK => {
-            println!("What SDK will your app target?");
+            println!("\nWhat SDK will your app target?");
         }
     }
     let version_regex = Regex::new(r#"[0-9]+\.[0-9]+\.[0-9]+(\.[0-9a-zA-Z_]+)?"#).unwrap();
