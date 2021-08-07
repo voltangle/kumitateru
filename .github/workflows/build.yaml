@@ -11,15 +11,15 @@ env:
 
 jobs:
   build-macOS:
+    env:
+      PACKAGE_VER: undefined
     runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v2
-      - name: Build
-        run: cargo build --verbose
       - name: Run tests
-        run: cargo test --verbose
-      - name: Also build a release version for macOS
+        run: cargo test
+      - name: Build a release version for macOS
         run: cargo build --release
       - name: Install Windows target
         run: rustup target add x86_64-pc-windows-gnu
@@ -31,11 +31,12 @@ jobs:
         run: cargo build --release --target x86_64-pc-windows-gnu
 #      - name: Release version for Linux
 #        run: cargo build --release --target x86_64-unknown-linux-musl
+      - name: Get package version
+        run: export PACKAGE_VER=`grep -E -m 1 '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9a-zA-Z_]+)?' Cargo.toml`
       - name: Rename build artifacts
         run: |
           mv target/release/kumitateru target/release/kmtr-mac
           mv target/x86_64-pc-windows-gnu/release/kumitateru.exe target/x86_64-pc-windows-gnu/release/kmtr-win.exe
-
       - name: Upload built artifact
         uses: actions/upload-artifact@v2
         with:
@@ -47,7 +48,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: true
-          title: "Latest Build"
+          title: "Latest Build ${{ env.PACKAGE_VER }}"
           files: |
             target/release/kmtr-mac
             target/x86_64-pc-windows-gnu/release/kmtr-win.exe
