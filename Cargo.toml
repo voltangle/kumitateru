@@ -5,17 +5,17 @@ authors = ["GGorAA <yegor_yakovenko@icloud.com>"]
 edition = "2018"
 
 [dependencies]
-minidom = "0.13.0"
-colored = "2.0.0"
-toml = "0.5.8"
+minidom = "0.13.*"
+colored = "2.0.*"
+toml = "0.5.*"
 serde = { version = "1.0.126", features = ["derive"] }
-yaserde = "0.6.0"
-yaserde_derive = "0.5.1"
-xml-rs = "0.8.3"
+yaserde = "0.6.*"
+yaserde_derive = "0.5.*"
+xml-rs = "0.8.*"
 log = "0.4"
-clap = "2.33.3"
-home = "0.5.3"
+clap = "2.33.*"
+home = "0.5.*"
 anyhow = "1.0.42"
-regex = "1.5.4"
-crossterm = "0.20.0"
-uuid = "0.8.*"
+regex = "1.5.*"
+crossterm = "0.20.*"
+uuid = { version = "0.8.*", features = ["v4"]}
