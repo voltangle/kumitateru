@@ -23,6 +23,7 @@ use crate::ser_de::config::app_config::{AppConfig, AppConfigPackage, AppConfigPa
 use regex::Regex;
 use crate::utils::arrow_selection::display_cli_selection;
 use crossterm::terminal::disable_raw_mode;
+use uuid::Uuid;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -146,14 +147,21 @@ fn main() -> Result<()> {
                 }
                 "new" => {
                     let mut proj_name = String::new();
-                    let mut proj_type: i8;
+                    let mut proj_type: String;
                     let mut proj_min_sdk = String::new();
                     let mut proj_target_sdk = String::new();
                     let mut proj_signing_key: Option<PathBuf> = None; // If none, then a new key should be generated. If some, then it will be imported
                     println!("{}", "Welcome to Kumitateru new project wizard!".bold());
                     println!("What should we call this project?");
                     io::stdin().read_line(&mut proj_name);
-                    proj_type = display_cli_selection(
+                    let app_types = vec!(
+                        "watch-app",
+                        "watchface",
+                        "datafield",
+                        "widget",
+                        "audio-content-provider"
+                    );
+                    proj_type = app_types[display_cli_selection(
                         "Now what type is your app?",
                         vec!(
                             "App",
@@ -161,7 +169,7 @@ fn main() -> Result<()> {
                             "Datafield",
                             "Widget",
                             "Audio content provider"
-                        ))? as i8;
+                        ))? as usize].to_string();
 
                     proj_min_sdk = get_version(VersionType::MinSDK);
 
@@ -174,30 +182,46 @@ fn main() -> Result<()> {
                         proj_signing_key = Some(PathBuf::from(path));
                     }
 
+                    Command::new("openssl").args([
+                        "genrsa",
+                        "-out", "id_rsa_garmin.pem",
+                        "4096"
+                    ]).status()?;
+                    Command::new("openssl").args([
+                       "pkcs8", "-topk8",
+                        "-inform", "PEM",
+                        "-outform", "DER",
+                        "-in", "id_rsa_garmin.pem",
+                        "-out", "id_rsa_garmin.der",
+                        "-nocrypt"
+                    ]).status()?;
+                    fs::remove_file("id_rsa_garmin.pem")?;
+
                     let toml_config = AppConfig {
                         package: AppConfigPackage {
                             icon_resource: "".to_string(),
                             name_res: "".to_string(),
                             main_class: "".to_string(),
-                            app_type: "".to_string(),
-                            min_sdk: "".to_string(),
-                            target_sdk: "".to_string()
+                            app_type: proj_type,
+                            min_sdk: proj_min_sdk[0..proj_min_sdk.len() - 1].to_string(),
+                            target_sdk: proj_target_sdk[0..proj_target_sdk.len() - 1].to_string()
                         },
                         package_meta: AppConfigPackageMeta {
-                            name: "".to_string(),
-                            id: "".to_string(),
-                            version: "".to_string(),
+                            name: proj_name[0..proj_name.len() - 1].to_string(),
+                            id: Uuid::new_v4().to_string(),
+                            version: "0.1.0".to_string(),
                             devices: vec![],
                             permissions: vec![],
                             languages: vec![]
                         },
                         build: AppConfigBuild {
-                            signing_key: "".to_string(),
+                            signing_key: "id_rsa_garmin.der".to_string(),
                             type_check_level: 0,
                             compiler_args: "".to_string()
                         },
                         dependencies: Default::default()
                     };
+                    println!("{:#?}", toml_config);
                 }
                 &_ => {}
             }
