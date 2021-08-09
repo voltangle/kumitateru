@@ -21,7 +21,7 @@ use anyhow::Context;
 use anyhow::Result;
 use crate::ser_de::config::app_config::{AppConfig, AppConfigPackage, AppConfigPackageMeta, AppConfigBuild};
 use regex::Regex;
-use crate::utils::arrow_selection::display_cli_selection;
+use utils::tui::item_selection::display_cli_item_selection;
 use crossterm::terminal::disable_raw_mode;
 use uuid::Uuid;
 use heck::CamelCase;
@@ -162,7 +162,7 @@ fn main() -> Result<()> {
                         "widget",
                         "audio-content-provider"
                     );
-                    proj_type = app_types[display_cli_selection(
+                    proj_type = app_types[display_cli_item_selection(
                         "Now what type is your app?",
                         vec!(
                             "App",
@@ -176,27 +176,29 @@ fn main() -> Result<()> {
 
                     proj_target_sdk = get_version(VersionType::TargetSDK);
 
-                    if display_cli_selection("Generate a new signing key or import one?", vec!("Generate a new key", "Import an existing key"))? == 1 {
+                    if display_cli_item_selection("Generate a new signing key or import one?", vec!("Generate a new key", "Import an existing key"))? == 1 {
                         println!("Please type the path to your key:");
                         let mut path = String::new();
                         io::stdin().read_line(&mut path);
                         proj_signing_key = Some(PathBuf::from(path));
                     }
 
-                    Command::new("openssl").args([
-                        "genrsa",
-                        "-out", "id_rsa_garmin.pem",
-                        "4096"
-                    ]).status()?;
-                    Command::new("openssl").args([
-                       "pkcs8", "-topk8",
-                        "-inform", "PEM",
-                        "-outform", "DER",
-                        "-in", "id_rsa_garmin.pem",
-                        "-out", "id_rsa_garmin.der",
-                        "-nocrypt"
-                    ]).status()?;
-                    fs::remove_file("id_rsa_garmin.pem")?;
+                    if proj_signing_key.unwrap() {
+                        Command::new("openssl").args([
+                            "genrsa",
+                            "-out", "id_rsa_garmin.pem",
+                            "4096"
+                        ]).status()?;
+                        Command::new("openssl").args([
+                            "pkcs8", "-topk8",
+                            "-inform", "PEM",
+                            "-outform", "DER",
+                            "-in", "id_rsa_garmin.pem",
+                            "-out", "id_rsa_garmin.der",
+                            "-nocrypt"
+                        ]).status()?;
+                        fs::remove_file("id_rsa_garmin.pem")?;
+                    }
                     let mut main_class = proj_name.to_string();
                     main_class.push_str("App");
                     println!("{}", main_class);
