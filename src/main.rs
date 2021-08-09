@@ -24,6 +24,7 @@ use regex::Regex;
 use crate::utils::arrow_selection::display_cli_selection;
 use crossterm::terminal::disable_raw_mode;
 use uuid::Uuid;
+use heck::CamelCase;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -196,12 +197,15 @@ fn main() -> Result<()> {
                         "-nocrypt"
                     ]).status()?;
                     fs::remove_file("id_rsa_garmin.pem")?;
+                    let mut main_class = proj_name.to_string();
+                    main_class.push_str("App");
+                    println!("{}", main_class);
 
                     let toml_config = AppConfig {
                         package: AppConfigPackage {
                             icon_resource: "".to_string(),
                             name_res: "".to_string(),
-                            main_class: "".to_string(),
+                            main_class: main_class.to_camel_case(),
                             app_type: proj_type,
                             min_sdk: proj_min_sdk[0..proj_min_sdk.len() - 1].to_string(),
                             target_sdk: proj_target_sdk[0..proj_target_sdk.len() - 1].to_string()
@@ -212,7 +216,7 @@ fn main() -> Result<()> {
                             version: "0.1.0".to_string(),
                             devices: vec![],
                             permissions: vec![],
-                            languages: vec![]
+                            languages: vec!["eng".to_string()]
                         },
                         build: AppConfigBuild {
                             signing_key: "id_rsa_garmin.der".to_string(),
