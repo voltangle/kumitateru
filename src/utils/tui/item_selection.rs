@@ -38,7 +38,7 @@ fn construct_arrow_selection(header: &str, items: Vec<&str>, highlighted: i64, s
     result
 }
 
-pub fn display_cli_selection(header: &str, items: Vec<&str>) -> Result<i64> {
+pub fn display_cli_item_selection(header: &str, items: Vec<&str>) -> Result<i64> {
     let mut highlighted: i64 = 0;
     // This is a thing to fix issues with resizing of the terminal window.
     // When the window resizes, a print of arrow selection is done again,
