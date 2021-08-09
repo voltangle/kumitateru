@@ -18,4 +18,5 @@ home = "0.5.*"
 anyhow = "1.0.42"
 regex = "1.5.*"
 crossterm = "0.20.*"
-uuid = { version = "0.8.*", features = ["v4"]}
+uuid = { version = "0.8.*", features = ["v4"] }
+heck = "0.3.*"
