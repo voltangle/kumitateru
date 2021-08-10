@@ -148,21 +148,20 @@ fn main() -> Result<()> {
                 }
                 "new" => {
                     let mut proj_name = String::new();
-                    let mut proj_type: String;
+                    let proj_type: String;
                     let mut proj_min_sdk = String::new();
                     let mut proj_target_sdk = String::new();
                     let mut proj_signing_key: Option<PathBuf> = None; // If none, then a new key should be generated. If some, then it will be imported
                     println!("{}", "Welcome to Kumitateru new project wizard!".bold());
                     println!("What should we call this project?");
                     io::stdin().read_line(&mut proj_name);
-                    let app_types = vec!(
+                    proj_type = vec!(
                         "watch-app",
                         "watchface",
                         "datafield",
                         "widget",
                         "audio-content-provider"
-                    );
-                    proj_type = app_types[display_cli_item_selection(
+                    )[display_cli_item_selection(
                         "Now what type is your app?",
                         vec!(
                             "App",
@@ -179,11 +178,11 @@ fn main() -> Result<()> {
                     if display_cli_item_selection("Generate a new signing key or import one?", vec!("Generate a new key", "Import an existing key"))? == 1 {
                         println!("Please type the path to your key:");
                         let mut path = String::new();
-                        io::stdin().read_line(&mut path);
+                        io::stdin().read_line(&mut path)?;
                         proj_signing_key = Some(PathBuf::from(path));
                     }
 
-                    if proj_signing_key.unwrap() {
+                    if proj_signing_key != None {
                         Command::new("openssl").args([
                             "genrsa",
                             "-out", "id_rsa_garmin.pem",
@@ -236,7 +235,7 @@ fn main() -> Result<()> {
             println!("{}", matches.usage());
         }
     }
-    disable_raw_mode(); // Just in case
+    disable_raw_mode()?; // Just in case
     Ok(())
 }
 
