@@ -149,8 +149,8 @@ fn main() -> Result<()> {
                 "new" => {
                     let mut proj_name = String::new();
                     let proj_type: String;
-                    let mut proj_min_sdk = String::new();
-                    let mut proj_target_sdk = String::new();
+                    let proj_min_sdk: String;
+                    let proj_target_sdk: String;
                     let mut proj_signing_key: Option<PathBuf> = None; // If none, then a new key should be generated. If some, then it will be imported
                     println!("{}", "Welcome to Kumitateru new project wizard!".bold());
                     println!("What should we call this project?");
@@ -182,7 +182,7 @@ fn main() -> Result<()> {
                         proj_signing_key = Some(PathBuf::from(path));
                     }
 
-                    if proj_signing_key != None {
+                    if proj_signing_key == None {
                         Command::new("openssl").args([
                             "genrsa",
                             "-out", "id_rsa_garmin.pem",
