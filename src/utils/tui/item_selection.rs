@@ -5,7 +5,7 @@ use std::{io, process};
 use crossterm::{terminal, cursor, ExecutableCommand};
 use anyhow::Result;
 
-fn construct_arrow_selection(header: &str, items: Vec<&str>, highlighted: i64, selected: bool) -> String {
+fn construct_selection(header: &str, items: Vec<&str>, highlighted: i64, selected: bool) -> String {
     let mut result = String::from(header.to_owned() + "\n");
     let mut i = 0;
     let longest_item = "";
@@ -52,23 +52,23 @@ pub fn display_cli_item_selection(header: &str, items: Vec<&str>) -> Result<i64>
     let mut exiting_state = false;
     loop {
         if selection_to_show {
-            print!("{}", construct_arrow_selection(&*("\n".to_owned() + header), items.clone(), highlighted, if exiting_state { true } else { false }));
+            print!("{}", construct_selection(&*("\n".to_owned() + header), items.clone(), highlighted, if exiting_state { true } else { false }));
             if exiting_state { break }
         }
         selection_to_show = false;
 
-        enable_raw_mode();
+        enable_raw_mode()?;
         let event = read()?;
         match event {
-            Event::Resize(w, h) => {
-                disable_raw_mode();
+            Event::Resize(_, _) => {
+                disable_raw_mode()?;
                 continue;
             }
             _ => {}
         }
 
         if event == Event::Key(KeyCode::Up.into()) {
-            disable_raw_mode();
+            disable_raw_mode()?;
             if highlighted == 0 {
                 highlighted = 4;
             } else {
@@ -78,7 +78,7 @@ pub fn display_cli_item_selection(header: &str, items: Vec<&str>) -> Result<i64>
         }
 
         if event == Event::Key(KeyCode::Down.into()) {
-            disable_raw_mode();
+            disable_raw_mode()?;
             if highlighted == 4 {
                 highlighted = 0;
             } else {
@@ -88,12 +88,12 @@ pub fn display_cli_item_selection(header: &str, items: Vec<&str>) -> Result<i64>
         }
 
         if event == Event::Key(KeyEvent { modifiers: KeyModifiers::CONTROL, code: KeyCode::Char('c') }) {
-            disable_raw_mode();
+            disable_raw_mode()?;
             process::exit(1);
         }
 
         if event == Event::Key(KeyCode::Enter.into()) {
-            disable_raw_mode();
+            disable_raw_mode()?;
             exiting_state = true;
             reset_selection(items.clone().len() as i64);
         }
