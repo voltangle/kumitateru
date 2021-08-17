@@ -61,6 +61,7 @@ fn main() -> Result<()> {
         )
         .subcommand(SubCommand::with_name("package"))
         .subcommand(SubCommand::with_name("new"))
+        .subcommand(SubCommand::with_name("clean"))
         .get_matches();
 
     match matches.subcommand_name() {
@@ -80,7 +81,7 @@ fn main() -> Result<()> {
                         let bin_loc = pre_compilation_steps(config_struct.clone()).with_context(|| "Unable to execute pre-compilation steps")?;
                         compile_app_project(
                             FsUtils::workdir(Some(PathBuf::from("build/tmp")))?,
-                            FsUtils::workdir(Some(PathBuf::from("build/output")))?,
+                            FsUtils::workdir(Some(PathBuf::from("build/bin")))?,
                             matches.subcommand_matches("build").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
                             bin_loc,
                             config_struct).with_context(|| "Failed to build a binary")?;
@@ -94,7 +95,7 @@ fn main() -> Result<()> {
                     }
                 }
                 "run" => {
-                    let config_str = fs::read_to_string("package.toml").with_context(|| "Unable to read package.toml")?;
+                    let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))?).with_context(|| "Unable to read package.toml")?;
                     let config_struct = toml::from_str::<AppConfig>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?;
                     let package_type = toml::from_str::<AppBarrelCheck>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?.package.package_type;
                     if package_type == "app" {
@@ -106,8 +107,8 @@ fn main() -> Result<()> {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Running the app..."); }
                         let bin_loc = pre_compilation_steps(config_struct.clone()).with_context(|| "Unable to execute pre-compilation steps")?;
                         compile_app_project(
-                            PathBuf::from("build/tmp"),
-                            PathBuf::from("build/output"),
+                            FsUtils::workdir(Some(PathBuf::from("build/tmp")))?,
+                            FsUtils::workdir(Some(PathBuf::from("build/bin")))?,
                             matches.subcommand_matches("run").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
                             bin_loc,
                             config_struct.clone()).with_context(|| "Failed to build a binary")?;
@@ -117,7 +118,7 @@ fn main() -> Result<()> {
                         thread::sleep(time::Duration::from_millis(2000)); // idk how to fix the race issue when monkeydo is unable to connect to the simulator because it has not started at the time other that like this
                         let _ = Command::new("monkeydo")
                             .args(&[
-                                format!("{}{}.prg", "build/output/", config_struct.clone().package_meta.name),
+                                format!("{}{}{}.prg", FsUtils::workdir(None)?.display(), "build/output/", config_struct.clone().package_meta.name),
                                 matches.subcommand_matches("run").unwrap().value_of("target").unwrap().to_string()
                             ]).status()?;
                     } else {
@@ -135,11 +136,12 @@ fn main() -> Result<()> {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Packaging the app..."); }
                         let bin_loc = pre_compilation_steps(config_struct.clone()).with_context(|| "Unable to execute pre-compilation steps")?;
                         compile_app_project(
-                            PathBuf::from("build/tmp"),
-                            PathBuf::from("build/bin"),
+                            FsUtils::workdir(Some(PathBuf::from("build/tmp")))?,
+                            FsUtils::workdir(Some(PathBuf::from("build/bin")))?,
                             "package",
                             bin_loc,
-                            config_struct.clone()).with_context(|| "Failed to build a binary")?;
+                            config_struct.clone()
+                        ).with_context(|| "Failed to build a binary")?;
                     } else {
                         if !env::var("KMTR_IDE_SILENT").is_ok() {
                             eprintln!("{}{}{}{}{}", "Sorry, this project is not an app, it is a".bright_red(), "library".bold().bright_red(), "(barrel). You can't use".bright_red(), "run".bold().bright_red(), "with libraries!".bright_red());
@@ -228,6 +230,9 @@ fn main() -> Result<()> {
                         dependencies: Default::default()
                     };
                     println!("{:#?}", toml_config);
+                }
+                "clean" => {
+                    FsUtils::recursive_delete(FsUtils::workdir(Some(PathBuf::from("build"))));
                 }
                 &_ => {}
             }
