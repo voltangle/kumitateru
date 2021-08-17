@@ -1,6 +1,7 @@
 use std::fs;
 use std::path::{PathBuf, Path};
 use anyhow::Result;
+use std::env;
 
 /// Big thanks to https://stackoverflow.com/a/60406693
 pub struct FsUtils {  }
@@ -77,5 +78,13 @@ impl FsUtils {
         }
 
         Ok(())
+    }
+
+    pub fn workdir(end: Option<PathBuf>) -> Result<PathBuf> {
+        let mut result = env::current_dir()?;
+        if end != None {
+            result.push(end.unwrap())
+        }
+        Ok(result)
     }
 }
