@@ -71,7 +71,7 @@ fn main() -> Result<()> {
                     let config_struct = toml::from_str::<AppConfig>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?;
                     let package_type = toml::from_str::<AppBarrelCheck>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?.package.package_type;
                     if package_type == String::from("app")  {
-                        let target = matches.subcommand_matches("run").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?;
+                        let target = matches.subcommand_matches("build").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?;
                         if !config_struct.package_meta.devices.contains(&target.to_string()) {
                             eprintln!("Bad target specified. Please use one from your package.toml");
                             process::exit(13);
