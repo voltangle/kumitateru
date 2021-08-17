@@ -51,7 +51,7 @@ jobs:
           title: "Latest Build"
           files: |
             target/release/kumitateru-mac
-            target/x86_64-pc-windows-gnu/release/kuitateru-win.exe
+            target/x86_64-pc-windows-gnu/release/kumitateru-win.exe
 #            target/x86_64-unknown-linux-musl/release/kumitateru
 
   build-Windows:
