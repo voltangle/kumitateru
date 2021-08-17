@@ -35,8 +35,8 @@ jobs:
         run: export PACKAGE_VER=`grep -E -m 1 '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9a-zA-Z_]+)?' Cargo.toml`
       - name: Rename build artifacts
         run: |
-          mv target/release/kumitateru target/release/kmtr-mac
-          mv target/x86_64-pc-windows-gnu/release/kumitateru.exe target/x86_64-pc-windows-gnu/release/kmtr-win.exe
+          mv target/release/kumitateru target/release/kumitateru-mac
+          mv target/x86_64-pc-windows-gnu/release/kumitateru.exe target/x86_64-pc-windows-gnu/release/kumitateru-win.exe
       - name: Upload built artifact
         uses: actions/upload-artifact@v2
         with:
@@ -50,8 +50,8 @@ jobs:
           prerelease: true
           title: "Latest Build"
           files: |
-            target/release/kmtr-mac
-            target/x86_64-pc-windows-gnu/release/kmtr-win.exe
+            target/release/kumitateru-mac
+            target/x86_64-pc-windows-gnu/release/kuitateru-win.exe
 #            target/x86_64-unknown-linux-musl/release/kumitateru
 
   build-Windows:
@@ -70,7 +70,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Windows
-          path: target/release/kumitateru
+          path: target/release/kumitateru.exe
 
   build-Ubuntu:
     runs-on: ubuntu-latest
