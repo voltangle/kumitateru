@@ -1,17 +1,17 @@
 use colored::Colorize;
 use std::{fs, env};
 use std::path::PathBuf;
-use crate::utils::fs_recursive_copy::{recursive_copy, recursive_delete};
 use crate::ser_de::parse_config::parse_config;
 use toml::value::Table;
 use anyhow::{Result, Context};
+use crate::utils::fs_utils::FsUtils;
 
 /// This function gathers all files from resources and
 /// src directories, and transfers them in build/proj,
 /// where it will be built by monkeyc.
 pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) -> Result<()> {
     if PathBuf::from("build/tmp").exists() {
-        recursive_delete("build/tmp").with_context(|| "An error occurred while clearing build/tmp")?;
+        FsUtils::recursive_delete("build/tmp").with_context(|| "An error occurred while clearing build/tmp")?;
     }
     let _ = fs::create_dir("build");
     let _ = fs::create_dir("build/tmp");
@@ -23,7 +23,7 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) ->
     let _ = fs::File::create(PathBuf::from("build/tmp/manifest.xml"));
     let _ = fs::write(PathBuf::from("build/tmp/manifest.xml"), manifest);
 
-    let _ = recursive_copy(PathBuf::from("src"), PathBuf::from("build/tmp/source"));
+    let _ = FsUtils::recursive_copy(PathBuf::from("src"), PathBuf::from("build/tmp/source"));
     if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Preparing resources...".bold()); }
     let mut device_specific_res: Vec<String> = Vec::new();
 
@@ -62,7 +62,7 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) ->
             let mut start_directory = PathBuf::from("resources/strings");
             start_directory.push("main");
 
-            recursive_copy(start_directory.clone(), end_dir.clone()).with_context(|| format!("Failed to copy {:?} dir(and it's contents) to {:?}", start_directory, end_dir))?;
+            FsUtils::recursive_copy(start_directory.clone(), end_dir.clone()).with_context(|| format!("Failed to copy {:?} dir(and it's contents) to {:?}", start_directory, end_dir))?;
         } else {
             let mut end_dir = PathBuf::from("build/tmp");
             let mut end_dirname: String = "resources-".parse().unwrap();
@@ -73,7 +73,7 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) ->
             let mut start_directory = PathBuf::from("resources/strings");
             start_directory.push(language);
 
-            recursive_copy(start_directory.clone(), end_dir.clone()).with_context(|| format!("Failed to copy {:?} dir(and it's contents) to {:?}", start_directory, end_dir))?;
+            FsUtils::recursive_copy(start_directory.clone(), end_dir.clone()).with_context(|| format!("Failed to copy {:?} dir(and it's contents) to {:?}", start_directory, end_dir))?;
         }
     }
 
@@ -134,7 +134,7 @@ fn transfer_device_resources(resource: String, device_specific_res: Vec<String>)
             end_dir.push(end_dirname);
             end_dir.push(&resource);
 
-            recursive_copy(&res_dir, &end_dir).with_context(|| format!("Failed to copy {:?} to {:?}", res_dir, end_dir))?;
+            FsUtils::recursive_copy(&res_dir, &end_dir).with_context(|| format!("Failed to copy {:?} to {:?}", res_dir, end_dir))?;
         }
     }
     Ok(())
