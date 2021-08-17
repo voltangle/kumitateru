@@ -128,7 +128,7 @@ fn main() -> Result<()> {
                     }
                 }
                 "package" => {
-                    let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))).with_context(|| "Unable to read package.toml")?;
+                    let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))?).with_context(|| "Unable to read package.toml")?;
                     let config_struct = toml::from_str::<AppConfig>(&*config_str).with_context(|| "Unable to parse package.toml")?;
                     let package_type = toml::from_str::<AppBarrelCheck>(&*config_str).with_context(|| "Unable to parse package.toml")?.package.package_type;
                     if package_type == "app" {
