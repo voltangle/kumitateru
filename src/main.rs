@@ -25,6 +25,7 @@ use utils::tui::item_selection::display_cli_item_selection;
 use crossterm::terminal::disable_raw_mode;
 use uuid::Uuid;
 use heck::CamelCase;
+use crate::utils::fs_utils::FsUtils;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -66,7 +67,7 @@ fn main() -> Result<()> {
         Some(name) => {
             match name {
                 "build" => {
-                    let config_str = fs::read_to_string("package.toml").with_context(|| "Unable to read package.toml")?;
+                    let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))?).with_context(|| "Unable to read package.toml")?;
                     let config_struct = toml::from_str::<AppConfig>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?;
                     let package_type = toml::from_str::<AppBarrelCheck>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?.package.package_type;
                     if package_type == String::from("app")  {
@@ -78,8 +79,8 @@ fn main() -> Result<()> {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Building the app..."); }
                         let bin_loc = pre_compilation_steps(config_struct.clone()).with_context(|| "Unable to execute pre-compilation steps")?;
                         compile_app_project(
-                            PathBuf::from("build/tmp"),
-                            PathBuf::from("build/output"),
+                            FsUtils::workdir(Some(PathBuf::from("build/tmp")))?,
+                            FsUtils::workdir(Some(PathBuf::from("build/output")))?,
                             matches.subcommand_matches("build").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
                             bin_loc,
                             config_struct).with_context(|| "Failed to build a binary")?;
@@ -127,7 +128,7 @@ fn main() -> Result<()> {
                     }
                 }
                 "package" => {
-                    let config_str = fs::read_to_string("package.toml").with_context(|| "Unable to read package.toml")?;
+                    let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))).with_context(|| "Unable to read package.toml")?;
                     let config_struct = toml::from_str::<AppConfig>(&*config_str).with_context(|| "Unable to parse package.toml")?;
                     let package_type = toml::from_str::<AppBarrelCheck>(&*config_str).with_context(|| "Unable to parse package.toml")?.package.package_type;
                     if package_type == "app" {
