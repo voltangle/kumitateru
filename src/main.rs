@@ -232,7 +232,7 @@ fn main() -> Result<()> {
                     println!("{:#?}", toml_config);
                 }
                 "clean" => {
-                    FsUtils::recursive_delete(FsUtils::workdir(Some(PathBuf::from("build"))));
+                    FsUtils::recursive_delete(FsUtils::workdir(Some(PathBuf::from("build")))?)?;
                 }
                 &_ => {}
             }
