@@ -51,7 +51,7 @@ pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) ->
     }
 
     // Then create directories for language resources and transfer them
-    for language in parse_config(fs::read_to_string("package.toml").unwrap()).package_meta.languages {
+    for language in parse_config(&*fs::read_to_string("package.toml").unwrap()).package_meta.languages {
         if language == "eng" {
             let mut end_dir = PathBuf::from("build/tmp");
             let end_dirname: String = "resources".parse().unwrap();

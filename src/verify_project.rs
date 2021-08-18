@@ -38,7 +38,7 @@ pub fn verify_app_project() -> Result<()> {
     // Get languages from the manifest
     if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Reading config...".bold()); }
     let config_string = fs::read_to_string(PathBuf::from("package.toml")).expect("No package.toml was found");
-    let parsed_config = parse_config(config_string.clone());
+    let parsed_config = parse_config(&*config_string.clone());
 
     let string_resource_directories: ReadDir;
     match fs::read_dir(resources_strings_location) {
