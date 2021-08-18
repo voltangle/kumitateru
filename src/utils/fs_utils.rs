@@ -50,36 +50,6 @@ impl FsUtils {
         Ok(())
     }
 
-    pub fn recursive_delete<U: AsRef<Path>>(dir: U) -> Result<()> {
-        let mut stack = Vec::new();
-        stack.push(PathBuf::from(dir.as_ref()));
-
-        while let Some(working_path) = stack.pop() {
-            for entry in fs::read_dir(working_path)? {
-                let entry = entry?;
-                let path = entry.path();
-                if path.is_dir() {
-                    stack.push(path);
-                } else {
-                    match path.file_name() {
-                        Some(_) => {
-                            if path.is_file() {
-                                fs::remove_file(&path)?;
-                            } else {
-                                fs::remove_dir(&path)?;
-                            }
-                        }
-                        None => {
-                            eprintln!("failed: {:?}", path);
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(())
-    }
-
     pub fn workdir(end: Option<PathBuf>) -> Result<PathBuf> {
         let mut result = env::current_dir()?;
         if end != None {
