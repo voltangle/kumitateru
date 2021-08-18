@@ -11,12 +11,12 @@ use crate::utils::fs_utils::FsUtils;
 /// where it will be built by monkeyc.
 pub fn construct_connectiq_app_project(manifest: String, dependencies: Table) -> Result<()> {
     if PathBuf::from("build/tmp").exists() {
-        FsUtils::recursive_delete("build/tmp").with_context(|| "An error occurred while clearing build/tmp")?;
+        fs::remove_dir_all("build/tmp").with_context(|| "An error occurred while clearing build/tmp")?;
     }
-    let _ = fs::create_dir("build");
-    let _ = fs::create_dir("build/tmp");
-    let _ = fs::create_dir("build/tmp/source");
-    let _ = fs::create_dir("build/tmp/resources");
+    fs::create_dir("build");
+    fs::create_dir("build/tmp");
+    fs::create_dir("build/tmp/source");
+    fs::create_dir("build/tmp/resources");
 
     if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Copying source code...".bold()); }
 
