@@ -98,9 +98,9 @@ fn main() -> Result<()> {
                     let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))?).with_context(|| "Unable to read package.toml")?;
                     let config_struct = toml::from_str::<AppConfig>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?;
                     let package_type = toml::from_str::<AppBarrelCheck>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?.package.package_type;
-                    if package_type == "app" {
+                    if package_type == String::from("app")  {
                         let target = matches.subcommand_matches("run").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?;
-                        if !config_struct.package_meta.devices.contains(&target.to_string()) || target != "all" {
+                        if !config_struct.package_meta.devices.contains(&target.to_string()) {
                             eprintln!("Bad target specified. Please use one from your package.toml");
                             process::exit(13);
                         }
@@ -118,7 +118,7 @@ fn main() -> Result<()> {
                         thread::sleep(time::Duration::from_millis(2000)); // idk how to fix the race issue when monkeydo is unable to connect to the simulator because it has not started at the time other that like this
                         let _ = Command::new("monkeydo")
                             .args(&[
-                                format!("{}{}{}.prg", FsUtils::workdir(None)?.display(), "build/output/", config_struct.clone().package_meta.name),
+                                format!("{}{}{}.prg", FsUtils::workdir(None)?.display(), "/build/bin/", config_struct.clone().package_meta.name),
                                 matches.subcommand_matches("run").unwrap().value_of("target").unwrap().to_string()
                             ]).status()?;
                     } else {
@@ -232,7 +232,7 @@ fn main() -> Result<()> {
                     println!("{:#?}", toml_config);
                 }
                 "clean" => {
-                    FsUtils::recursive_delete(FsUtils::workdir(Some(PathBuf::from("build")))?)?;
+                    fs::remove_dir_all(FsUtils::workdir(Some(PathBuf::from("build")))?).with_context(|| "Unable to clear build directory")?;
                 }
                 &_ => {}
             }
