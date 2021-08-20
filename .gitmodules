@@ -1,0 +1,3 @@
+[submodule "kumitateru-pdk"]
+	path = kumitateru-pdk
+	url = https://github.com/ggoraa/kumitateru-pdk.git
