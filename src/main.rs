@@ -4,6 +4,7 @@ mod verify_project;
 pub mod compile_project;
 mod ser_de;
 mod ciq_sdk;
+mod plugins;
 
 use colored::Colorize;
 use std::{fs, thread, time, process, env};
@@ -27,6 +28,7 @@ use uuid::Uuid;
 use heck::CamelCase;
 use crate::utils::fs_utils::FsUtils;
 use crate::ser_de::parse_config::parse_config;
+use crate::plugins::structs::EventSubscribers;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -42,8 +44,44 @@ struct AppBarrelCheckPackage {
 }
 
 fn main() -> Result<()> {
+    // Initialising plugins
+    let mut plugin_list: Vec<libloading::Library> = vec!();
+    let mut event_subscribers = EventSubscribers {
+        subscribers: vec![
+            // Initialising default events
+            ("build::before".to_string(), vec![]),
+            ("build::after".to_string(), vec![]),
+            ("run::build::before".to_string(), vec![]),
+            ("run::build::after".to_string(), vec![]),
+            ("run::execution::before".to_string(), vec![]),
+            ("run::execution::after".to_string(), vec![]),
+            ("package::before".to_string(), vec![]),
+            ("package::after".to_string(), vec![]),
+            ("clean::before".to_string(), vec![]),
+            ("clean::after".to_string(), vec![]),
+        ]
+    };
+
+    unsafe {
+        for entry in fs::read_dir(FsUtils::workdir(Some(PathBuf::from("plugins")))?).unwrap() {
+            let entry = entry.unwrap();
+            plugin_list.push(libloading::Library::new(entry.path())?);
+        }
+    }
+    for (index, plugin) in plugin_list.iter().enumerate() {
+        let activate_plugin: libloading::Symbol<unsafe extern fn() -> kumitateru_pdk::PluginConfig> = unsafe { plugin.get(b"activate")? };
+        unsafe {
+            let plugin_conf = activate_plugin();
+            for subscription in plugin_conf.subscriptions {
+                // Pushes a new subscriber to the struct
+                event_subscribers.add_subscriber_for_event(&subscription.0, (index, subscription.1));
+            }
+        }
+    }
+
+
     let matches = App::new("Kumitateru")
-        .version("0.4.0")
+        .version("0.5.0")
         .author("GGorAA <yegor_yakovenko@icloud.com>")
         .about("A build system for Garmin ConnectIQ.")
         .subcommand(SubCommand::with_name("build")
@@ -233,7 +271,22 @@ fn main() -> Result<()> {
                     println!("{:#?}", toml_config);
                 }
                 "clean" => {
+                    let action_subscribers_before = event_subscribers.get_subscribers_for_event("clean::before");
+                    let action_subscribers_after = event_subscribers.get_subscribers_for_event("clean::after");
+                    let mut actions_before: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+                    let mut actions_after: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+
+                    // In this section we retrieve all functions from these subscribers
+                    for (plugin_index, symbol_name) in action_subscribers_before {
+                        actions_before.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+                    for (plugin_index, symbol_name) in action_subscribers_after {
+                        actions_after.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+
+                    for func in actions_before { unsafe { func(); } }
                     fs::remove_dir_all(FsUtils::workdir(Some(PathBuf::from("build")))?).with_context(|| "Unable to clear build directory")?;
+                    for func in actions_after { unsafe { func(); } }
                 }
                 &_ => {}
             }
