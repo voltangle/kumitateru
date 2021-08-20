@@ -17,8 +17,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          submodules: recursive
+      - uses: textbook/git-checkout-submodule-action@master
+          with:
+            remote: true
       - name: Run tests
         run: cargo test
       - name: Build a release version for macOS
@@ -61,8 +62,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          submodules: recursive
+      - uses: textbook/git-checkout-submodule-action@master
+          with:
+            remote: true
       - name: Build
         run: cargo build --verbose
       - name: Run tests
@@ -81,8 +83,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: textbook/git-checkout-submodule-action@master
         with:
-          submodules: recursive
+          remote: true
       - name: Build
         run: cargo build --verbose
       - name: Run tests
