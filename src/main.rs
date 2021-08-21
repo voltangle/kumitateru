@@ -4,6 +4,7 @@ mod verify_project;
 pub mod compile_project;
 mod ser_de;
 mod ciq_sdk;
+mod plugins;
 
 use colored::Colorize;
 use std::{fs, thread, time, process, env};
@@ -27,6 +28,7 @@ use uuid::Uuid;
 use heck::CamelCase;
 use crate::utils::fs_utils::FsUtils;
 use crate::ser_de::parse_config::parse_config;
+use crate::plugins::structs::EventSubscribers;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -42,8 +44,44 @@ struct AppBarrelCheckPackage {
 }
 
 fn main() -> Result<()> {
+    // Initialising plugins
+    let mut plugin_list: Vec<libloading::Library> = vec!();
+    let mut event_subscribers = EventSubscribers {
+        subscribers: vec![
+            // Initialising default events
+            ("build::before".to_string(), vec![]),
+            ("build::after".to_string(), vec![]),
+            ("run::build::before".to_string(), vec![]),
+            ("run::build::after".to_string(), vec![]),
+            ("run::execution::before".to_string(), vec![]),
+            ("run::execution::after".to_string(), vec![]),
+            ("package::before".to_string(), vec![]),
+            ("package::after".to_string(), vec![]),
+            ("clean::before".to_string(), vec![]),
+            ("clean::after".to_string(), vec![]),
+        ]
+    };
+
+    unsafe {
+        for entry in fs::read_dir(FsUtils::workdir(Some(PathBuf::from("plugins")))?).unwrap() {
+            let entry = entry.unwrap();
+            plugin_list.push(libloading::Library::new(entry.path())?);
+        }
+    }
+    for (index, plugin) in plugin_list.iter().enumerate() {
+        let activate_plugin: libloading::Symbol<unsafe extern fn() -> kumitateru_pdk::PluginConfig> = unsafe { plugin.get(b"activate")? };
+        unsafe {
+            let plugin_conf = activate_plugin();
+            for subscription in plugin_conf.subscriptions {
+                // Pushes a new subscriber to the struct
+                event_subscribers.add_subscriber_for_event(&subscription.0, (index, subscription.1));
+            }
+        }
+    }
+
+
     let matches = App::new("Kumitateru")
-        .version("0.4.0")
+        .version("0.5.0")
         .author("GGorAA <yegor_yakovenko@icloud.com>")
         .about("A build system for Garmin ConnectIQ.")
         .subcommand(SubCommand::with_name("build")
@@ -69,6 +107,19 @@ fn main() -> Result<()> {
         Some(name) => {
             match name {
                 "build" => {
+                    // Init events
+                    let mut actions_build_before: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+                    let mut actions_build_after: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("build::before") {
+                        actions_build_before.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("build::after") {
+                        actions_build_after.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+
+                    for func in actions_build_before { unsafe { func(); } } // execute actions for build::before event
+
                     let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))?).with_context(|| "Unable to read package.toml")?;
                     let config_struct = parse_config(&*config_str.clone());
                     let package_type = toml::from_str::<AppBarrelCheck>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?.package.package_type;
@@ -94,8 +145,30 @@ fn main() -> Result<()> {
                         if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Bad project type specified. Please, set it to \"app\" and leave it alone."); }
                         process::exit(12); // Exit code 12 indicates that the project config has bad project type
                     }
+
+                    for func in actions_build_after { unsafe { func(); } } // execute actions for build::after event
                 }
                 "run" => {
+                    // Init events
+                    let mut actions_build_before: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+                    let mut actions_build_after: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+                    let mut actions_execution_before: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+                    let mut actions_execution_after: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("run::build::before") {
+                        actions_build_before.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("run::build::after") {
+                        actions_build_after.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("run::execution::before") {
+                        actions_execution_before.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("run::execution::after") {
+                        actions_execution_after.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+
+                    for func in actions_build_before { unsafe { func(); } } // execute actions for run::build::before event
                     let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))?).with_context(|| "Unable to read package.toml")?;
                     let config_struct = parse_config(&*config_str.clone());
                     let package_type = toml::from_str::<AppBarrelCheck>(&*config_str.clone()).with_context(|| "Unable to parse package.toml")?.package.package_type;
@@ -115,6 +188,8 @@ fn main() -> Result<()> {
                             config_struct.clone()).with_context(|| "Failed to build a binary")?;
                         if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{} {}", "Step 4:".bold().bright_green(), "Run"); }
                         if env::var("KMTR_IDE_SILENT").is_ok() { println!("\n=== RUN LOGS ===\n"); }
+                        for func in actions_build_after { unsafe { func(); } } // execute actions for run::build::after event
+                        for func in actions_execution_before { unsafe { func(); } } // execute actions for run::execution::before event
                         let _ = Command::new("connectiq").status()?; // start the simulator
                         thread::sleep(time::Duration::from_millis(2000)); // idk how to fix the race issue when monkeydo is unable to connect to the simulator because it has not started at the time other that like this
                         let _ = Command::new("monkeydo")
@@ -122,6 +197,7 @@ fn main() -> Result<()> {
                                 format!("{}{}{}.prg", FsUtils::workdir(None)?.display(), "/build/bin/", config_struct.clone().package_meta.name),
                                 matches.subcommand_matches("run").unwrap().value_of("target").unwrap().to_string()
                             ]).status()?;
+                        for func in actions_execution_after { unsafe { func(); } } // execute actions for run::execution::after event
                     } else {
                         if !env::var("KMTR_IDE_SILENT").is_ok() {
                             eprintln!("{}{}{}{}{}", "Sorry, this project is not an app, it is a".bright_red(), "library".bold().bright_red(), "(barrel). You can't use".bright_red(), "run".bold().bright_red(), "with libraries!".bright_red());
@@ -130,6 +206,18 @@ fn main() -> Result<()> {
                     }
                 }
                 "package" => {
+                    // Init events
+                    let mut actions_before: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+                    let mut actions_after: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("package::before") {
+                        actions_before.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("package::after") {
+                        actions_after.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+
+                    for func in actions_before { unsafe { func(); } } // execute actions for package::before event
                     let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))?).with_context(|| "Unable to read package.toml")?;
                     let config_struct = parse_config(&*config_str);
                     let package_type = toml::from_str::<AppBarrelCheck>(&*config_str).with_context(|| "Unable to parse package.toml")?.package.package_type;
@@ -149,6 +237,7 @@ fn main() -> Result<()> {
                         }
                         process::exit(12); // Exit code 12 indicates that the project config has bad project type
                     }
+                    for func in actions_after { unsafe { func(); } } // execute actions for package::after event
                 }
                 "new" => {
                     let mut proj_name = String::new();
@@ -233,7 +322,20 @@ fn main() -> Result<()> {
                     println!("{:#?}", toml_config);
                 }
                 "clean" => {
+                    let mut actions_before: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+                    let mut actions_after: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+
+                    // In this section we retrieve all functions from these subscribers
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("clean::before") {
+                        actions_before.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("clean::after") {
+                        actions_after.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+                    }
+
+                    for func in actions_before { unsafe { func(); } } // execute actions for clean::before event
                     fs::remove_dir_all(FsUtils::workdir(Some(PathBuf::from("build")))?).with_context(|| "Unable to clear build directory")?;
+                    for func in actions_after { unsafe { func(); } }
                 }
                 &_ => {}
             }
