@@ -9,7 +9,7 @@ minidom = "0.13.*"
 colored = "2.0.*"
 toml = "0.5.*"
 serde = { version = "1.0.126", features = ["derive"] }
-yaserde = "0.6.*"
+yaserde = "0.7.*"
 yaserde_derive = "0.5.*"
 xml-rs = "0.8.*"
 log = "0.4"
