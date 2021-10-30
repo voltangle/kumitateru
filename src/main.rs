@@ -28,7 +28,7 @@ use uuid::Uuid;
 use heck::CamelCase;
 use crate::utils::fs_utils::FsUtils;
 use crate::ser_de::parse_config::parse_config;
-use crate::plugins::structs::EventSubscribers;
+use crate::plugins::EventSubscribers;
 
 // These are for checking package type, is it a library or an app
 #[derive(Deserialize)]
@@ -41,6 +41,18 @@ struct AppBarrelCheck {
 #[derive(Clone)]
 struct AppBarrelCheckPackage {
     package_type: String,
+}
+
+macro_rules! get_subsriber_functions {
+    ($name:expr, $plugin_list:expr, $event_subscribers:expr) => {
+        {
+            let mut actions: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
+            for (plugin_index, symbol_name) in $event_subscribers.get_subscribers_for_event($name) {
+                actions.push(unsafe { $plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
+            }
+            actions
+        }
+    };
 }
 
 fn main() -> Result<()> {
@@ -129,7 +141,7 @@ fn main() -> Result<()> {
                             eprintln!("Bad target specified. Please use one from your package.toml");
                             process::exit(13);
                         }
-                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("Building the app..."); }
+                        println!("Building the app...");
                         let bin_loc = pre_compilation_steps(config_struct.clone()).with_context(|| "Unable to execute pre-compilation steps")?;
                         compile_app_project(
                             FsUtils::workdir(Some(PathBuf::from("build/tmp")))?,
@@ -137,12 +149,12 @@ fn main() -> Result<()> {
                             matches.subcommand_matches("build").unwrap().value_of("target").with_context(|| "Argument --target/-t was not specified")?,
                             bin_loc,
                             config_struct).with_context(|| "Failed to build a binary")?;
-                        if !env::var("KMTR_IDE_SILENT").is_ok() { println!("{}", "Successfully built!".bold().bright_green()); }
-                    } else if package_type == String::from("lib") {
-                        if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Kumitateru does not support building libraries(barrels) at the time. Please, replace project_type value with \"app\"."); }
+                        println!("{}", "Successfully built!".bold().bright_green());
+                    } else if package_type == String::from("barrel") {
+                        eprintln!("Kumitateru does not support building barrels at the time. Please, replace project_type value with \"app\".");
                         process::exit(12); // Exit code 12 indicates that the project config has bad project type
                     } else {
-                        if !env::var("KMTR_IDE_SILENT").is_ok() { eprintln!("Bad project type specified. Please, set it to \"app\" and leave it alone."); }
+                        eprintln!("Bad project type specified. Please, set it to \"app\" and leave it alone.");
                         process::exit(12); // Exit code 12 indicates that the project config has bad project type
                     }
 
@@ -150,23 +162,10 @@ fn main() -> Result<()> {
                 }
                 "run" => {
                     // Init events
-                    let mut actions_build_before: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
-                    let mut actions_build_after: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
-                    let mut actions_execution_before: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
-                    let mut actions_execution_after: Vec<libloading::Symbol<unsafe extern fn()>> = Vec::new();
-
-                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("run::build::before") {
-                        actions_build_before.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
-                    }
-                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("run::build::after") {
-                        actions_build_after.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
-                    }
-                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("run::execution::before") {
-                        actions_execution_before.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
-                    }
-                    for (plugin_index, symbol_name) in event_subscribers.get_subscribers_for_event("run::execution::after") {
-                        actions_execution_after.push(unsafe { plugin_list[plugin_index].get(&*symbol_name.into_bytes())? });
-                    }
+                    let mut actions_build_before: Vec<libloading::Symbol<unsafe extern fn()>> = get_subsriber_functions!("run::build::before", plugin_list, event_subscribers);
+                    let mut actions_build_after: Vec<libloading::Symbol<unsafe extern fn()>> = get_subsriber_functions!("run::build::after", plugin_list, event_subscribers);
+                    let mut actions_execution_before: Vec<libloading::Symbol<unsafe extern fn()>> = get_subsriber_functions!("run::execution::before", plugin_list, event_subscribers);
+                    let mut actions_execution_after: Vec<libloading::Symbol<unsafe extern fn()>> = get_subsriber_functions!("run::execution::after", plugin_list, event_subscribers);
 
                     for func in actions_build_before { unsafe { func(); } } // execute actions for run::build::before event
                     let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))?).with_context(|| "Unable to read package.toml")?;
