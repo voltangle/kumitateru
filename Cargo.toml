@@ -17,7 +17,7 @@ clap = "2.33.*"
 home = "0.5.*"
 anyhow = "1.0.42"
 regex = "1.5.*"
-crossterm = "0.20.*"
+crossterm = "0.22.*"
 uuid = { version = "0.8.*", features = ["v4"] }
 heck = "0.3.*"
 libloading = "0.7.*"
