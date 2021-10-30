@@ -60,10 +60,6 @@ compiler_args = "" # If you want some custom parameters, place them here
 "simple-barrel" = ["0.1.0", "simple-barrel-0.1.0.barrel"] # The second entry is a path to the barrel inside of dependencies folder.
 ```
 
-For now Kumitateru does not support external dependencies(or barrels, as Garmin calls them),
-but I will figure out later how to add them, specifically when i will learn the full structure
-of Connect IQ manifest and monkey.jungle. 
-
 ## Using the build system
 Basic build command is `./kumitateru build`, which compiles the app in .iq format. To build
 for a specific device, run `./kumitateru build --target <device>`. To build for all devices
