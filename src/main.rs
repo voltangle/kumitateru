@@ -86,10 +86,10 @@ fn main() -> Result<()> {
     for (index, plugin) in plugin_list.iter().enumerate() {
         let activate_plugin: libloading::Symbol<unsafe extern fn() -> kumitateru_pdk::PluginConfig> = unsafe { plugin.get(b"activate")? };
         unsafe {
-            let plugin_conf = activate_plugin();
-            for subscription in plugin_conf.subscriptions {
+            let plugin_conf = activate_plugin(); // Activate the plugin and get it's config
+            for (event, function) in plugin_conf.subscriptions {
                 // Pushes a new subscriber to the struct
-                event_subscribers.add_subscriber_for_event(&subscription.0, (index, subscription.1));
+                event_subscribers.add_subscriber_for_event(&event, (index, function));
             }
         }
     }
@@ -122,8 +122,6 @@ fn main() -> Result<()> {
         Some(name) => {
             match name {
                 "build" => {
-                    // Init events
-
                     for func in get_subsriber_functions!("build::before", plugin_list, event_subscribers) { unsafe { func(); } } // execute actions for build::before event
 
                     let config_str = fs::read_to_string(FsUtils::workdir(Some(PathBuf::from("package.toml")))?).with_context(|| "Unable to read package.toml")?;
